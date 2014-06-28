@@ -50,10 +50,7 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 from Decoration import *
 from Node import *
 from Edge import *
-from mobdat.common.Utilities import GenName
-
-import re
-import json
+#from mobdat.common.Utilities import GenName
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +141,7 @@ class Graph :
         elif name in self.Edges :
             return self.Edges[name]
         else :
-            raise NameError("graph contains no object named %s" % mname)
+            raise NameError("graph contains no object named %s" % name)
 
     # =================================================================
     # NODE methods
@@ -210,7 +207,7 @@ class Graph :
             nodetype -- string name of a node type
         """
         nodes = []
-        for name, node in self.IterNodes(pattern, nodetype, predicate) :
+        for _, node in self.IterNodes(pattern, nodetype, predicate) :
             nodes.append(node)
 
         return nodes
@@ -327,7 +324,7 @@ class Graph :
         if name in self.Edges :
             return self.Edges[name]
         else :
-            raise NameError("graph contains no edge named %s" % mname)
+            raise NameError("graph contains no edge named %s" % name)
             
     # -----------------------------------------------------------------
     def FindEdgeBetweenNodes(self, node1, node2) :
@@ -340,6 +337,7 @@ class Graph :
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 if __name__ == '__main__' :
+    """
     from mobdat.common.graph.Node import *
     from mobdat.common.graph.Edge import *
     from mobdat.common.graph.Decoration import *
@@ -445,3 +443,4 @@ if __name__ == '__main__' :
     print "type2edges"
     for e in net2.Collections['type2edges'].Members :
         print "{0} has weight {1}".format(e.Name, e.EdgeType.Weight)
+    """

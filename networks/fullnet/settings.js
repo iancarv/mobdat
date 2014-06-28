@@ -31,7 +31,7 @@
         "VelocityDelta" : 0.1,
         "AccelerationDelta" : 0.05,
         "EndPoint" : "http://127.0.0.1:7060/Dispatcher/",
-        "Scene" : "Fullnet",
+        "Scene" : "ICS408",
         "UpdateThreadCount" : 6,
         "Binary" : true
     },

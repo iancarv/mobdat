@@ -49,8 +49,6 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 
 from GraphObject import *
 from Decoration import *
-from mobdat.common.Utilities import GenName
-
 
 logger = logging.getLogger(__name__)
 
