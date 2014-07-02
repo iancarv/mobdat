@@ -38,22 +38,23 @@ network such as building a grid of roads.
 
 """
 
-import os, sys, copy
+from mobdat.common import WorldInfo
+from mobdat.common.Utilities import GenName, GenNameFromCoordinates
+from mobdat.common.graph import Edge, LayoutNodes, LayoutEdges, LayoutDecoration, \
+    SocialNodes
+import copy
+import json
 import logging
+import os
+import sys
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from mobdat.common import WorldInfo
-from mobdat.common.graph import Graph, Edge
-from mobdat.common.graph import LayoutNodes, LayoutEdges, LayoutDecoration
-from mobdat.common.graph import SocialNodes, SocialEdges, SocialDecoration
 
-from mobdat.common.Utilities import GenName, GenNameFromCoordinates
 
-import re, json
 
 logger = logging.getLogger(__name__)
 

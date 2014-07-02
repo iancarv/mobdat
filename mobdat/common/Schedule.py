@@ -76,7 +76,7 @@ class WeeklySchedule :
     # -----------------------------------------------------------------
     @staticmethod
     def WorkWeekSchedule(stime, etime) :
-        sched = [[] for x in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sun + 1)]
+        sched = [[] for _ in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sun + 1)]
 
         # work week
         for d in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sat) :
@@ -87,7 +87,7 @@ class WeeklySchedule :
     # -----------------------------------------------------------------
     @staticmethod
     def FullWeekSchedule(stime, etime) :
-        sched = [[] for x in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sun + 1)]
+        sched = [[] for _ in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sun + 1)]
 
         # work week
         for d in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sun + 1) :
@@ -98,7 +98,7 @@ class WeeklySchedule :
     # -----------------------------------------------------------------
     @staticmethod
     def SpecialSchedule(**keywords) :
-        sched = [[] for x in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sun + 1)]
+        sched = [[] for _ in range(DaysOfTheWeek.Mon, DaysOfTheWeek.Sun + 1)]
 
         for key in keywords :
             if isinstance(keywords[key], tuple) :

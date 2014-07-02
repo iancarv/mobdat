@@ -336,7 +336,7 @@ class VehicleTypeDecoration(Decoration) :
         if not self.VehicleTypeList :
             self.VehicleTypeList = []
             for name, rate in self.VehicleTypeMap.iteritems() :
-                self.VehicleTypeList.extend([name for x in range(rate)])
+                self.VehicleTypeList.extend([name for _ in range(rate)])
 
         return random.choice(self.VehicleTypeList)
 

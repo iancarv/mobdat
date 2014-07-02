@@ -40,14 +40,14 @@ network such as building a grid of roads.
 
 import os, sys
 import logging
+from mobdat.common.graph import Graph, LayoutDecoration, SocialDecoration,\
+    SocialEdges
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
-
-from mobdat.common.graph import *
 
 import json
 

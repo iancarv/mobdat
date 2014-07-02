@@ -47,7 +47,7 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 
 import uuid
 import OpenSimRemoteControl
-from mobdat.common.graph import Graph
+from mobdat.common.graph import Edge
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -204,8 +204,8 @@ class OpenSimBuilder :
                     result = self.OpenSimConnector.CreateObject(asset, pos=[p1x, p1y, zoff], name=road.Name, parm=startparms)
 
             # build the map so that we do render the reverse roads
-            self.RoadMap[Graph.GenEdgeName(road.StartNode, road.EndNode)] = True
-            self.RoadMap[Graph.GenEdgeName(road.EndNode, road.StartNode)] = True
+            self.RoadMap[Edge.GenEdgeName(road.StartNode, road.EndNode)] = True
+            self.RoadMap[Edge.GenEdgeName(road.EndNode, road.StartNode)] = True
     
 
     # -----------------------------------------------------------------

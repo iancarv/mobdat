@@ -47,7 +47,7 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from Edge import *
+from Edge import WeightedEdge
 from mobdat.common.ValueTypes import WeightedChoice
 
 import random, math
@@ -89,7 +89,7 @@ class Generators :
             n1 = 0
             n2 = 0
 
-            for j in range(scale) :
+            for _ in range(scale) :
                 quadrant = quadpicker.Choose()
                 n1 = (n1 << 1) | (quadrant >> 1)
                 n2 = (n2 << 1) | (quadrant & 1)

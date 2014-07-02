@@ -50,8 +50,9 @@ import random
 import Trip
 
 from mobdat.common import TravelTimeEstimator
-from mobdat.common.timedevent import TimedEvent, TimedEventList, IntervalVariable
+from mobdat.common.timedevent import TimedEvent, TimedEventList
 from mobdat.common.graph import SocialDecoration
+from mobdat.common.graph.SocialDecoration import BusinessType
 
 logger = logging.getLogger(__name__)
 
@@ -125,10 +126,10 @@ class Traveler :
         self.LocationNameMap['home'] = [ self.Person ]
         self.LocationNameMap['work'] = [ self.Employer ]
 
-        self.LocationNameMap['coffee'] = self.FindBusinessByType(SocialDecoration.BusinessType.Food, 'coffee')
-        self.LocationNameMap['lunch'] = self.FindBusinessByType(SocialDecoration.BusinessType.Food, 'fastfood')
-        self.LocationNameMap['dinner'] = self.FindBusinessByType(SocialDecoration.BusinessType.Food, 'small-restaurant')
-        self.LocationNameMap['shopping'] = self.FindBusinessByType(SocialDecoration.BusinessType.Service, None)
+        self.LocationNameMap['coffee'] = self.FindBusinessByType(BusinessType.Food, 'coffee')
+        self.LocationNameMap['lunch'] = self.FindBusinessByType(BusinessType.Food, 'fastfood')
+        self.LocationNameMap['dinner'] = self.FindBusinessByType(BusinessType.Food, 'small-restaurant')
+        self.LocationNameMap['shopping'] = self.FindBusinessByType(BusinessType.Service, None)
 
     # -----------------------------------------------------------------
     def ResolveLocationName(self, name) :

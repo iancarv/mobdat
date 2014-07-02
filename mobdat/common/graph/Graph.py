@@ -40,6 +40,8 @@ network such as building a grid of roads.
 
 import os, sys
 import logging
+from mobdat.common.graph.Decoration import CommonDecorations
+import re
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
@@ -47,10 +49,9 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from Decoration import *
-from Node import *
-from Edge import *
-#from mobdat.common.Utilities import GenName
+from Node import Node
+from Edge import Edge
+import json
 
 logger = logging.getLogger(__name__)
 

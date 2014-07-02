@@ -37,7 +37,7 @@ This module defines a variety of event classes.
 
 """
 
-import os, sys, warnings
+import os, sys
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
@@ -230,7 +230,7 @@ class EventPropertyChange(ObjectEvent) :
     def __str__(self) :
         pstring = super(EventCreateObject,self).__str__()
         fstring = "{0},{1}:{2}"
-        return string.format(pstring,self.ObjectProperty,self.ObjectValue)
+        return fstring.format(pstring,self.ObjectProperty,self.ObjectValue)
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -247,7 +247,7 @@ class EventObjectDynamics(ObjectEvent) :
     def __str__(self) :
         pstring = super(EventCreateObject,self).__str__()
         fstring = "{0},x:{1},y:{2},z:{3}"
-        return string.format(pstring,self.ObjectPosition.x,self.ObjectPosition.y,self.ObjectPosition.z)
+        return fstring.format(pstring,self.ObjectPosition.x,self.ObjectPosition.y,self.ObjectPosition.z)
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -261,7 +261,7 @@ class EventInductionLoop(ObjectEvent) :
     def __str__(self) :
         pstring = super(EventInductionLoop,self).__str__()
         fstring = "{0},VehicleCount:{1}"
-        return string.format(pstring,self.VehicleCount)
+        return fstring.format(pstring,self.VehicleCount)
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -275,6 +275,6 @@ class EventTrafficLightStateChange(ObjectEvent) :
     def __str__(self) :
         pstring = super(EventCreateObject,self).__str__()
         fstring = "{0},state:{2}"
-        return string.format(pstring,self.StopLightState)
+        return fstring.format(pstring,self.StopLightState)
 
 

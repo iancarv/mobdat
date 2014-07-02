@@ -39,7 +39,7 @@ and operations into and out of the sumo traffic simulator.
 """
 import os, sys
 import logging
-import subprocess, threading, string, time
+import subprocess
 
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
@@ -50,7 +50,7 @@ from sumolib import checkBinary
 
 import traci
 import traci.constants as tc
-import BaseConnector, EventRouter, EventHandler, EventTypes
+import BaseConnector, EventHandler, EventTypes
 from mobdat.common import ValueTypes
 
 import math

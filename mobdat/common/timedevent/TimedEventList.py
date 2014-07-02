@@ -48,7 +48,6 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
 import random
-from mobdat.common.Utilities import GenName
 from mobdat.common.TravelTimeEstimator import TravelTimeEstimator
 from mobdat.common.timedevent import TimedEvent, IntervalVariable
 

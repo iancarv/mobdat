@@ -57,18 +57,18 @@ class IntervalVariable :
     MinimalVariance = 0.00001
 
     # -----------------------------------------------------------------
-    def __init__(self, stime, etime = None, id = None) :
+    def __init__(self, stime, etime = None, iv_id = None) :
         """ Create a variable to use for time constraints
 
         Args:
             stime -- float, the interval start time
             etime -- float, the interval end time
-            id -- unique identifier for the time variable
+            ade_id -- unique identifier for the time variable
         """
 
         self.IntervalStart = float(min(stime, etime or stime))
         self.IntervalEnd = float(max(stime, etime or stime))
-        self.ID = id or GenName('TV')
+        self.ID = iv_id or GenName('TV')
 
     # -----------------------------------------------------------------
     def __str__(self) :
@@ -85,9 +85,9 @@ class IntervalVariable :
         raise ValueError("Attempt to convert indeterminant time variable to float {0}".format(self.ID))
 
     # -----------------------------------------------------------------
-    def Copy(self, id = None) :
+    def Copy(self, time_id = None) :
         """ Create a copy of the time variable """
-        return self.__class__(self.IntervalStart, self.IntervalEnd, id)
+        return self.__class__(self.IntervalStart, self.IntervalEnd, time_id)
 
     # -----------------------------------------------------------------
     def IsFixed(self) :

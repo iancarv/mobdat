@@ -39,7 +39,6 @@ Simple test combining sumo traffic simulation and opensim 3d virtual world.
 
 import os, sys
 import logging
-import math
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
@@ -54,7 +53,6 @@ from mobdat.common import ValueTypes
 
 from collections import deque
 import Queue, threading, time, platform
-import random
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -120,7 +118,7 @@ class OpenSimUpdateThread(threading.Thread) :
 
                 self.ProcessUpdates(updates)
 
-            except Queue.Empty as detail :
+            except Queue.Empty as _ :
                 pass
 
     # -----------------------------------------------------------------
@@ -471,7 +469,7 @@ class OpenSimConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         # Start the worker threads
         self.WorkQ = Queue.Queue(0)
         self.UpdateThreads = []
-        for count in range(self.UpdateThreadCount) :
+        for _ in range(self.UpdateThreadCount) :
             thread = OpenSimUpdateThread(self.WorkQ, self.EndPoint, self.Capability, self.Scene, self.Vehicles, self.Binary)
             thread.start()
             self.UpdateThreads.append(thread)
