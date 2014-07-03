@@ -4,7 +4,7 @@
         "TimeSteps" : 0,
         "Interval" : 0.200,
         "SecondsPerStep" : 2.0,
-        "StartTimeOfDay" : 0.0,
+        "StartTimeOfDay" : 7.0,
         "MaximumTravelers" : 0, 
 	"WorldInfoFile" : "networks/fullnet/data/worldinfo.js",
         "Connectors" : ["opensim", "sumo", "social", "stats"]
@@ -30,10 +30,17 @@
         "PositionDelta" : 0.1,
         "VelocityDelta" : 0.1,
         "AccelerationDelta" : 0.05,
-        "EndPoint" : "http://127.0.0.1:7060/Dispatcher/",
-        "Scene" : "ICS408",
         "UpdateThreadCount" : 6,
-        "Binary" : true
+        "Binary" : true,
+	"Scenes" :
+	{
+		"ICS408" :
+		{
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://127.0.0.1:9000/Dispatcher/"
+		}
+	}
     },
     
     "SumoConnector" :

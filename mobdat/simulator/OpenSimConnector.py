@@ -213,7 +213,7 @@ class OpenSimVehicle :
 class OpenSimConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
 
     # -----------------------------------------------------------------
-    def __init__(self, evrouter, settings, world, netsettings) :
+    def __init__(self, evrouter, settings, world, netsettings, cname) :
         """Initialize the OpenSimConnector by creating the opensim remote control handlers.
 
         Keyword arguments:
@@ -246,17 +246,22 @@ class OpenSimConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         self.VelocityDelta = settings["OpenSimConnector"].get("VelocityDelta",0.1)
         self.AccelerationDelta = settings["OpenSimConnector"].get("AcclerationDelta",0.1)
         self.Interpolated = 0
+        self.Binary = settings["OpenSimConnector"].get("Binary",False)
 
+        # The scene name is described on the connector as osc:SceneName
+        self.Scene = cname.split(':')[1]
+
+        # Scene settings
+        scsettings = settings["OpenSimConnector"]["Scenes"][self.Scene]
         # Setup the remote control object
-        if 'Capability' not in settings["OpenSimConnector"] :
+        if 'Capability' not in scsettings:
             self.__Logger.error("missing or expired opensim remote control capability")
+            print scsettings
             sys.exit(-1)
 
-        self.Capability = uuid.UUID(settings["OpenSimConnector"]["Capability"])
-        self.EndPoint = settings["OpenSimConnector"]["EndPoint"]
-        self.AsyncEndPoint = settings["OpenSimConnector"]["AsyncEndPoint"]
-        self.Scene = settings["OpenSimConnector"]["Scene"]
-        self.Binary = settings["OpenSimConnector"].get("Binary",False)
+        self.Capability = uuid.UUID(scsettings["Capability"])
+        self.EndPoint = scsettings["EndPoint"]
+        self.AsyncEndPoint = scsettings["AsyncEndPoint"]
 
         self.UpdateThreadCount = settings["OpenSimConnector"].get("UpdateThreadCount",2)
 

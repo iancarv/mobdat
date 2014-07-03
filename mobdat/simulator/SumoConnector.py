@@ -60,7 +60,7 @@ import math
 class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
 
     # -----------------------------------------------------------------
-    def __init__(self, evrouter, settings, world, netsettings) :
+    def __init__(self, evrouter, settings, world, netsettings, cname) :
         EventHandler.EventHandler.__init__(self, evrouter)
         BaseConnector.BaseConnector.__init__(self, settings, world, netsettings)
 

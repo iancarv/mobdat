@@ -57,7 +57,6 @@ import SumoConnector, OpenSimConnector, SocialConnector, StatsConnector
 
 _SimulationControllers = {
     'sumo' : SumoConnector.SumoConnector,
-    'opensim' : OpenSimConnector.OpenSimConnector,
     'social' : SocialConnector.SocialConnector,
     'stats' : StatsConnector.StatsConnector
     }
@@ -217,7 +216,11 @@ def Controller(settings) :
     world = WorldInfo.WorldInfo.LoadFromFile(infofile)
 
     cnames = settings["General"].get("Connectors",['sumo', 'opensim', 'social', 'stats'])
-
+    if 'opensim' in cnames:
+        cnames.remove('opensim')
+        for sname in settings["OpenSimConnector"]["Scenes"].keys():
+            _SimulationControllers['osc:'+sname] = OpenSimConnector.OpenSimConnector
+            cnames.append('osc:'+sname)
     evrouter = EventRouter.EventRouter()
 
     # initialize the connectors first
@@ -227,7 +230,7 @@ def Controller(settings) :
             logger.warn('skipping unknown simulation connector; %s' % (cname))
             continue
 
-        connector = _SimulationControllers[cname](evrouter, settings, world, laysettings)
+        connector = _SimulationControllers[cname](evrouter, settings, world, laysettings, cname)
         connproc = Process(target=connector.SimulationStart, args=())
         connproc.start()
         connectors.append(connproc)
