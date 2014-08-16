@@ -12,7 +12,7 @@
 
     "Builder" :
     {
-	"ExtensionFiles" : ["networks/fullnet/layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
+	"ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
     },
 
     "SocialConnector" :
@@ -513,5 +513,34 @@
             "AssetID" : "65715f46-7dc1-4b4a-ba64-23b9f972bdc4",
             "StartParameter" : "{ 'terminate' : 0, 'color' : '<0.0, 1.0, 0.0>', 'scale' : '<1.25, 4.0, 1.25>' }"
         }
+    ],
+
+    "Cities" :
+    [
+        {
+            "Name" : "City00",
+            "Offset" : [0,0]
+        },
+
+        {
+            "Name" : "City11",
+            "Offset" : [1600,1600]
+        },
+	{
+	    "Name" : "City10",
+	    "Offset" : [1600,0]
+	},
+	{
+	    "Name" : "City01",
+	    "Offset" : [0,1600]
+	}
+    ],
+
+    "CityConnections" :
+    [
+	["City00:main200W400N","City01:main200W400S"],
+	["City00:main400E100N","City10:main400W100N"],
+	["City01:main400E100N","City11:main400W100N"],
+	["City10:main200W400N","City11:main200W400S"]
     ]
 }

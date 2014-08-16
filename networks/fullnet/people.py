@@ -55,11 +55,11 @@ logger = logging.getLogger('people')
 
 if 'world' not in globals() or 'world' not in locals():
     world = None
-    return
+    exit('no world variable')
 
 if 'laysettings' not in globals() or 'laysettings' not in locals():
     laysettings = None
-    return
+    exit('no laysettings variable')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
