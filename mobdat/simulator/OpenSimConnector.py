@@ -244,7 +244,7 @@ class OpenSimConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         # Initialize some of the update control variables
         self.PositionDelta = settings["OpenSimConnector"].get("PositionDelta",0.1)
         self.VelocityDelta = settings["OpenSimConnector"].get("VelocityDelta",0.1)
-        self.AccelerationDelta = settings["OpenSimConnector"].get("AcclerationDelta",0.1)
+        self.AccelerationDelta = settings["OpenSimConnector"].get("AccelerationDelta",0.1)
         self.Interpolated = 0
         self.Binary = settings["OpenSimConnector"].get("Binary",False)
 

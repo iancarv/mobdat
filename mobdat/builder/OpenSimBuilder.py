@@ -66,12 +66,12 @@ class OpenSimBuilder :
         try :
             self.OpenSimConnector = OpenSimRemoteControl.OpenSimRemoteControl(settings["OpenSimConnector"]["EndPoint"])
             self.OpenSimConnector.Capability = uuid.UUID(settings["OpenSimConnector"]["Capability"])
-            self.OpenSimConnector.Scene = settings["OpenSimConnector"]["Scene"]
+            self.OpenSimConnector.Scene = settings["OpenSimConnector"]["Scenes"].keys()[0]
+            self.Logger.info("Picked Scene %s for remote control.",self.OpenSimConnector.Scene)
 
-            woffs = settings["OpenSimConnector"]["WorldCenter"]
-            self.WorldCenterX = woffs[0]
-            self.WorldCenterY = woffs[1]
-            self.WorldCenterZ = woffs[2]
+            woffs = settings["OpenSimConnector"]["BuildOffset"]
+            self.WorldOffsetX = woffs[0]
+            self.WorldOffsetY = woffs[1]
 
         except NameError as detail: 
             self.Logger.warn("Failed processing OpenSim configuration; name error %s", (str(detail)))
@@ -81,7 +81,7 @@ class OpenSimBuilder :
             sys.exit(-1)
         except :
             exctype, value =  sys.exc_info()[:2]
-            self._Logger.warn('handler failed with exception type %s; %s', exctype, str(value))
+            self.Logger.warn('handler failed with exception type %s; %s', exctype, str(value))
             sys.exit(-1)
 
     # -----------------------------------------------------------------
@@ -169,7 +169,7 @@ class OpenSimBuilder :
             self.Logger.warn('something went wrong computing the signature')
             return(0,0,0,0)
 
-        return (s1x + self.WorldCenterX, s1y + self.WorldCenterY, e1x + self.WorldCenterX, e1y + self.WorldCenterY)
+        return (s1x + self.WorldOffsetX, s1y + self.WorldOffsetY, e1x + self.WorldOffsetX, e1y + self.WorldOffsetY)
 
 
     # -----------------------------------------------------------------
@@ -225,8 +225,8 @@ class OpenSimBuilder :
             if rot >= 0 :
                 self.NodeMap[name] = itype
 
-                p1x = node.X + self.WorldCenterX
-                p1y = node.Y + self.WorldCenterY
+                p1x = node.X + self.WorldOffsetX
+                p1y = node.Y + self.WorldOffsetY
                 p1z = itype.ZOffset
                 asset = itype.AssetID
                 if type(asset) == dict :

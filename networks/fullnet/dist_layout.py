@@ -67,37 +67,37 @@ def ConvertEdgeCoordinate(prefix, p1, p2) :
 
 def BuildCity(city_name,empty_world):
     city_name += ':'
-    # -----------------------------------------------------------------
+        # -----------------------------------------------------------------
     # -----------------------------------------------------------------
     # residence and business nodes
-    rntype = empty_world.AddIntersectionType(city_name + 'townhouse', 'priority')
-    antype = empty_world.AddIntersectionType(city_name + 'apartment', 'priority', False)
-    bntype = empty_world.AddIntersectionType(city_name + 'business', 'priority', False)
+    rntype = empty_world.AddIntersectionType('townhouse', 'priority')
+    antype = empty_world.AddIntersectionType('apartment', 'priority', False)
+    bntype = empty_world.AddIntersectionType('business', 'priority', False)
 
     # basic roadway nodes and edges
-    pntype = empty_world.AddIntersectionType(city_name + 'priority','priority_stop')
-    sntype = empty_world.AddIntersectionType(city_name + 'stoplight','traffic_light')
+    pntype = empty_world.AddIntersectionType('priority','priority_stop')
+    sntype = empty_world.AddIntersectionType('stoplight','traffic_light')
 
-    e1A = empty_world.AddRoadType(city_name + 'etype1A', 1, 70, 2.0, sig='1L')
-    e1B = empty_world.AddRoadType(city_name + 'etype1B', 1, 40, 1.5, sig='1L')
-    e1C = empty_world.AddRoadType(city_name + 'etype1C', 1, 20, 1.0, sig='1L')
-    e2A = empty_world.AddRoadType(city_name + 'etype2A', 2, 70, 3.0, sig='2L')
-    e2B = empty_world.AddRoadType(city_name + 'etype2B', 2, 40, 2.0, sig='2L')
-    e2C = empty_world.AddRoadType(city_name + 'etype2C', 2, 20, 1.0, sig='2L')
+    e1A = empty_world.AddRoadType('etype1A', 1, 70, 2.0, sig='1L')
+    e1B = empty_world.AddRoadType('etype1B', 1, 40, 1.5, sig='1L')
+    e1C = empty_world.AddRoadType('etype1C', 1, 20, 1.0, sig='1L')
+    e2A = empty_world.AddRoadType('etype2A', 2, 70, 3.0, sig='2L')
+    e2B = empty_world.AddRoadType('etype2B', 2, 40, 2.0, sig='2L')
+    e2C = empty_world.AddRoadType('etype2C', 2, 20, 1.0, sig='2L')
 
-    e1way = empty_world.AddRoadType(city_name + '1way2lane', 2, 40, 2.0, sig='2L', center=True)
+    e1way = empty_world.AddRoadType('1way2lane', 2, 40, 2.0, sig='2L', center=True)
 
     # driveway
-    dntype = empty_world.AddIntersectionType(city_name + 'driveway', 'priority_stop')
-    edrv = empty_world.AddRoadType(city_name + 'driveway', 1, 10, 0.5, sig='D')
+    dntype = empty_world.AddIntersectionType('driveway', 'priority_stop')
+    edrv = empty_world.AddRoadType('driveway', 1, 10, 0.5, sig='D')
 
     # parking lots
     #plotnode  = empty_world.AddIntersectionType('parking_drive_intersection', 'priority', False)
     #plotentry = empty_world.AddRoadType('parking_entry', 1, 20, 1.0, sig='1L', render=False)
     #plotdrive = empty_world.AddRoadType('parking_drive', 1, 10, 0.5, sig='D', render=False)
-    plotnode  = empty_world.AddIntersectionType(city_name + 'parking_drive_intersection', 'priority')
-    plotentry = empty_world.AddRoadType(city_name + 'parking_entry', 1, 20, 1.0, sig='P')
-    plotdrive = empty_world.AddRoadType(city_name + 'parking_drive', 1, 10, 0.5, sig='D')
+    plotnode  = empty_world.AddIntersectionType('parking_drive_intersection', 'priority')
+    plotentry = empty_world.AddRoadType('parking_entry', 1, 20, 1.0, sig='P')
+    plotdrive = empty_world.AddRoadType('parking_drive', 1, 10, 0.5, sig='D')
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # MAIN GRIDS
@@ -116,11 +116,11 @@ def BuildCity(city_name,empty_world):
 
     # And then set a bunch of the edges to be two lane instead
     # of the four lane edges we created for the rest of the grid
-    empty_world.SetRoadTypeByPattern(city_name + 'main[0-9]*[EW]200[NS]=O=main[0-9]*[EW]200[NS]',e1A)
-    empty_world.SetRoadTypeByPattern(city_name + 'main[0-9]*[EW]400[NS]=O=main[0-9]*[EW]400[NS]',e1A)
+    empty_world.SetRoadTypeByPattern(city_name + 'main[0-9]*[EW]200[NS]=O=' + city_name + 'main[0-9]*[EW]200[NS]',e1A)
+    empty_world.SetRoadTypeByPattern(city_name + 'main[0-9]*[EW]400[NS]=O=' + city_name + 'main[0-9]*[EW]400[NS]',e1A)
 
-    empty_world.SetRoadTypeByPattern(city_name + 'main300[EW][0-9]*[NS]=O=main300[EW][0-9]*[NS]',e1A)
-    empty_world.SetRoadTypeByPattern(city_name + 'main400[EW][0-9]*[NS]=O=main400[EW][0-9]*[NS]',e1A)
+    empty_world.SetRoadTypeByPattern(city_name + 'main300[EW][0-9]*[NS]=O=' + city_name + 'main300[EW][0-9]*[NS]',e1A)
+    empty_world.SetRoadTypeByPattern(city_name + 'main400[EW][0-9]*[NS]=O=' + city_name + 'main400[EW][0-9]*[NS]',e1A)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # PLAZA GRID
@@ -138,20 +138,20 @@ def BuildCity(city_name,empty_world):
         empty_world.DropEdgeByName(ConvertEdgeCoordinate(city_name + 'plaza', ( 50, ns), ( 50, ns - 50)))
 
     # Make the north and south most east/west streets one way as well
-    empty_world.DropEdgeByName(city_name + 'plaza50E250S=O=plaza0E250S')
-    empty_world.DropEdgeByName(city_name + 'plaza0E250S=O=plaza50W250S')
-    empty_world.DropEdgeByName(city_name + 'plaza50W250N=O=plaza0E250N')
-    empty_world.DropEdgeByName(city_name + 'plaza0E250N=O=plaza50E250N')
+    empty_world.DropEdgeByName(city_name + 'plaza50E250S=O=' + city_name + 'plaza0E250S')
+    empty_world.DropEdgeByName(city_name + 'plaza0E250S=O=' + city_name + 'plaza50W250S')
+    empty_world.DropEdgeByName(city_name + 'plaza50W250N=O=' + city_name + 'plaza0E250N')
+    empty_world.DropEdgeByName(city_name + 'plaza0E250N=O=' + city_name + 'plaza50E250N')
 
     # The one way streets are all 2 lanes
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza50[EW].*=O=plaza50[EW].*',e1way)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza.*250[NS]=O=plaza.*250[NS]',e1way)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza50[EW].*=O=' + city_name + 'plaza50[EW].*'.format(city_name,city_name),e1way)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza.*250[NS]=O=' + city_name + 'plaza.*250[NS]',e1way)
 
     # The central north/south road is four lane
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]100[NS]=O=plaza[0-9]*[EW]100[NS]',e2A)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]0N=O=plaza[0-9]*[EW]0N',e2A)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=plaza0E[0-9]*[NS]',e2A)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=plaza0E[0-9]*[NS]',e2A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]100[NS]=O=' + city_name + 'plaza[0-9]*[EW]100[NS]',e2A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]0N=O=' + city_name + 'plaza[0-9]*[EW]0N',e2A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=' + city_name + 'plaza0E[0-9]*[NS]',e2A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=' + city_name + 'plaza0E[0-9]*[NS]',e2A)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # CONNECT THE GRIDS
@@ -295,7 +295,6 @@ for name,city in laysettings.Cities.items():
         world.AddEdge(edge)
 
 for conn in laysettings.CityConnections:
-    #world.ConnectIntersections(world.Nodes['City00:main300E300N'],world.Nodes['City11:main300W300S'],world.FindNodeByName('City11:etype2A'))
-    world.ConnectIntersections(world.Nodes[conn[0]],world.Nodes[conn[1]],world.FindNodeByName('City11:etype2A'))
+    world.ConnectIntersections(world.Nodes[conn[0]],world.Nodes[conn[1]],world.FindNodeByName('etype2A'))
 
 logger.info("Loaded fullnet network builder extension file")

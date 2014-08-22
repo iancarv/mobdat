@@ -12,21 +12,21 @@
 
     "Builder" :
     {
-	"ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
+	"ExtensionFiles" : ["networks/fullnet/dist_layout.py","networks/fullnet/business.py", "networks/fullnet/people.py"]
     },
 
     "SocialConnector" :
     {
         "WaitMean" : 1000.0,
         "WaitSigma" : 200.0,
-        "PeopleCount" : 1200
+        "PeopleCount" : 120
     },
 
     "OpenSimConnector" :
     {
-        "WorldSize" : [810.0, 810.0, 100.0],
-        "WorldOffset" : [363.0, 363.0, 26.0],
-        "WorldCenter" : [768.0, 768.0, 26.0],
+        "WorldSize" : [2410.0, 2410.0, 100.0],
+	"BuildOffset" : [415.0, 415.0],
+        "WorldOffset" : [10.0, 10.0, 26.0],
         "PositionDelta" : 0.1,
         "VelocityDelta" : 0.1,
         "AccelerationDelta" : 0.05,
@@ -34,7 +34,7 @@
         "Binary" : true,
 	"Scenes" :
 	{
-		"ICS408" :
+		"City00" :
 		{
 			"AvatarName" : "Test User",
 			"Password" : "test",
