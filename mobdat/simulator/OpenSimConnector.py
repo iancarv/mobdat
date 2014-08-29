@@ -59,25 +59,25 @@ import Queue, threading, time, platform
 class OpenSimUpdateThread(threading.Thread) :
 
     # -----------------------------------------------------------------
-    def __init__(self, workq, endpoint, capability, scene, vmap, binary = False) :
+    def __init__(self, workq, scene, vmap, binary = False, rcs) :
         threading.Thread.__init__(self)
 
         self.__Logger = logging.getLogger(__name__)
 
         self.TotalUpdates = 0
         self.WorkQ = workq
-        self.EndPoint = endpoint
-        self.Capability = capability
+        #self.EndPoint = endpoint
+        #self.Capability = capability
         self.Scene = scene
         self.Vehicles = vmap
         self.Binary = binary
 
         # logfile = 'log%d' % (random.randint(0,1000))
         # self.OpenSimConnector = OpenSimRemoteControl.OpenSimRemoteControl(self.EndPoint, request = 'async', logfile = logfile)
-        self.OpenSimConnector = OpenSimRemoteControl.OpenSimRemoteControl(self.EndPoint, async = True)
-        self.OpenSimConnector.Capability = self.Capability
-        self.OpenSimConnector.Scene = self.Scene
-        self.OpenSimConnector.Binary = self.Binary
+        #self.OpenSimConnector = OpenSimRemoteControl.OpenSimRemoteControl(self.EndPoint, async = True)
+        #self.OpenSimConnector.Capability = self.Capability
+        #self.OpenSimConnector.Scene = self.Scene
+        #self.OpenSimConnector.Binary = self.Binary
 
     # -----------------------------------------------------------------
     def run(self) :

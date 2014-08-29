@@ -48,6 +48,8 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 import uuid
 import OpenSimRemoteControl
 from mobdat.common.graph import Edge
+from mobdat.common.Utilities import AuthByUserName, GenCoordinateMap,\
+    CalculateOSCoordinates, CalculateOSCoordinatesFromOrigin
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -64,14 +66,22 @@ class OpenSimBuilder :
         self.NodeMap = {}
 
         try :
-            self.OpenSimConnector = OpenSimRemoteControl.OpenSimRemoteControl(settings["OpenSimConnector"]["EndPoint"])
-            self.OpenSimConnector.Capability = uuid.UUID(settings["OpenSimConnector"]["Capability"])
-            self.OpenSimConnector.Scene = settings["OpenSimConnector"]["Scenes"].keys()[0]
-            self.Logger.info("Picked Scene %s for remote control.",self.OpenSimConnector.Scene)
+            #self.OpenSimConnector = OpenSimRemoteControl.OpenSimRemoteControl(settings["OpenSimConnector"]["EndPoint"])
+            #self.OpenSimConnector.Capability = uuid.UUID(settings["OpenSimConnector"]["Capability"])
+            #self.OpenSimConnector.Scene = settings["OpenSimConnector"]["Scenes"]
+            #self.Logger.info("Picked Scene %s for remote control.",self.OpenSimConnector.Scene)
 
+            AuthByUserName(settings)
+            self.RegionMap = GenCoordinateMap(settings)
             woffs = settings["OpenSimConnector"]["BuildOffset"]
             self.WorldOffsetX = woffs[0]
             self.WorldOffsetY = woffs[1]
+
+            rsize = settings["OpenSimConnector"]["RegionSize"]
+            self.RegionSizeX = rsize[0]
+            self.RegionSizeY = rsize[1]
+
+            self.Scenes = settings["OpenSimConnector"]["Scenes"]
 
         except NameError as detail: 
             self.Logger.warn("Failed processing OpenSim configuration; name error %s", (str(detail)))
@@ -89,20 +99,21 @@ class OpenSimBuilder :
         oname = assetinfo["ObjectName"]
         iname = assetinfo["ItemName"]
 
-        result = self.OpenSimConnector.FindObjects(pattern = oname)
-        if not result["_Success"] or len(result["Objects"]) == 0 :
-            self.Logger.warn("Unable to locate container object %s; %s",oname, result["_Message"])
-            sys.exit(-1)
+        for name,sim in self.Scenes.items():
+            conn = sim["Connector"]
+            result = conn.FindObjects(pattern = oname)
+            if not result["_Success"] or len(result["Objects"]) == 0 :
+                continue
 
-        objectid = result["Objects"][0]
-        result = self.OpenSimConnector.GetObjectInventory(objectid)
-        if not result["_Success"] :
-            self.Logger.warn("Failed to get inventory from container object %s; %s",oname, result["_Message"])
-            sys.exit(-1)
-            
-        for item in result["Inventory"] :
-            if item["Name"] == iname :
-                return item["AssetID"]
+            objectid = result["Objects"][0]
+            result = conn.GetObjectInventory(objectid)
+            if not result["_Success"] :
+                self.Logger.warn("Failed to get inventory from container object %s; %s",oname, result["_Message"])
+                sys.exit(-1)
+
+            for item in result["Inventory"] :
+                if item["Name"] == iname :
+                    return item["AssetID"]
 
         self.Logger.warn("Failed to locate item %s in object %s",iname, oname);
         return None
@@ -169,8 +180,7 @@ class OpenSimBuilder :
             self.Logger.warn('something went wrong computing the signature')
             return(0,0,0,0)
 
-        return (s1x + self.WorldOffsetX, s1y + self.WorldOffsetY, e1x + self.WorldOffsetX, e1y + self.WorldOffsetY)
-
+        return CalculateOSCoordinatesFromOrigin(s1x + self.WorldOffsetX, s1y + self.WorldOffsetY, e1x + self.WorldOffsetX, e1y + self.WorldOffsetY, self)
 
     # -----------------------------------------------------------------
     def PushNetworkToOpenSim(self) :
@@ -197,11 +207,11 @@ class OpenSimBuilder :
                     asset = self.FindAssetInObject(asset)
                     self.LayoutSettings.RoadTypeMap[road.RoadType.Name][0].AssetID = asset
 
-                (p1x, p1y, p2x, p2y) = self.ComputeLocation(road.StartNode, road.EndNode)
+                (p1x, p1y),(p2x, p2y),conn = self.ComputeLocation(road.StartNode, road.EndNode)
                 startparms = "{ 'spoint' : '<%f, %f, %f>', 'epoint' : '<%f, %f, %f>' }" % (p1x, p1y, zoff, p2x, p2y, zoff)
 
                 if abs(p1x - p2x) > 0.1 or abs(p1y - p2y) > 0.1 :
-                    result = self.OpenSimConnector.CreateObject(asset, pos=[p1x, p1y, zoff], name=road.Name, parm=startparms)
+                    result = conn.CreateObject(asset, pos=[p1x, p1y, zoff], name=road.Name, parm=startparms)
 
             # build the map so that we do render the reverse roads
             self.RoadMap[Edge.GenEdgeName(road.StartNode, road.EndNode)] = True
@@ -225,8 +235,8 @@ class OpenSimBuilder :
             if rot >= 0 :
                 self.NodeMap[name] = itype
 
-                p1x = node.X + self.WorldOffsetX
-                p1y = node.Y + self.WorldOffsetY
+                (p1x,p1y),connector = CalculateOSCoordinates(node.X + self.WorldOffsetX, node.Y + self.WorldOffsetY, self)
+
                 p1z = itype.ZOffset
                 asset = itype.AssetID
                 if type(asset) == dict :
@@ -236,7 +246,7 @@ class OpenSimBuilder :
                 startparms = "{ 'center' : '<%f, %f, %f>', 'angle' : %f }" % (p1x, p1y, p1z, 90.0 * rot)
 
                 if node.IntersectionType.Render :
-                    result = self.OpenSimConnector.CreateObject(asset, pos=[p1x, p1y, p1z], name=name, parm=startparms)
+                    result = connector.CreateObject(asset, pos=[p1x, p1y, p1z], name=name, parm=startparms)
 
                 success = True
                 break

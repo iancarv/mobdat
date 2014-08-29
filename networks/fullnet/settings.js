@@ -12,7 +12,7 @@
 
     "Builder" :
     {
-	"ExtensionFiles" : ["networks/fullnet/dist_layout.py","networks/fullnet/business.py", "networks/fullnet/people.py"]
+	"ExtensionFiles" : ["networks/fullnet/dist_layout.py"]
     },
 
     "SocialConnector" :
@@ -24,7 +24,8 @@
 
     "OpenSimConnector" :
     {
-        "WorldSize" : [2410.0, 2410.0, 100.0],
+        "WorldSize" : [1910.0, 1910.0, 100.0],
+	"RegionSize" : [1024.0, 1024.0],
 	"BuildOffset" : [415.0, 415.0],
         "WorldOffset" : [10.0, 10.0, 26.0],
         "PositionDelta" : 0.1,
@@ -38,7 +39,29 @@
 		{
 			"AvatarName" : "Test User",
 			"Password" : "test",
-			"EndPoint" : "http://127.0.0.1:9000/Dispatcher/"
+			"EndPoint" : "http://parana.mdg.lab:9000/Dispatcher/",
+			"Location" : [0,0]
+		},
+		"City01" :
+		{
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://ganges.mdg.lab:9000/Dispatcher/",
+			"Location" : [0,1]
+		},
+		"City10" :
+		{
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://rhine.mdg.lab:9000/Dispatcher/",
+			"Location" : [1,0]
+		},
+		"City11" :
+		{
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://hudson.mdg.lab:9000/Dispatcher/",
+			"Location" : [1,1]
 		}
 	}
     },
@@ -524,15 +547,15 @@
 
         {
             "Name" : "City11",
-            "Offset" : [1600,1600]
+            "Offset" : [1100,1100]
         },
 	{
 	    "Name" : "City10",
-	    "Offset" : [1600,0]
+	    "Offset" : [1100,0]
 	},
 	{
 	    "Name" : "City01",
-	    "Offset" : [0,1600]
+	    "Offset" : [0,1100]
 	}
     ],
 
