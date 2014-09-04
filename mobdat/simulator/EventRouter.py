@@ -86,6 +86,8 @@ class EventRouter :
                     return
 
                 self.RouteEvent(evtype, event)
+            except KeyboardInterrupt:
+                return
             except :
                 exctype, value =  sys.exc_info()[:2]
                 self._Logger.warn('failed with exception type %s; %s', exctype, str(value))

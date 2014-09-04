@@ -57,7 +57,7 @@ _NameCounts = {}
 # -----------------------------------------------------------------
 def AuthByUserName(settings) :
     for sname,sim in settings["OpenSimConnector"]["Scenes"].items():
-        endpoint = sim["EndPoint"] if "EndPoint" in sim else \
+        endpoint = str(sim["EndPoint"]) if "EndPoint" in sim else \
             exit('No endpoint defined for Scene {0}'.format(sname))
         avname = sim["AvatarName"] if "AvatarName" in sim else \
             exit('No avatar name specified to login in Scene {0}'.format(sname))
@@ -68,14 +68,12 @@ def AuthByUserName(settings) :
         if not passwd :
             print "Please type the password for User {0} in Scene {1}".format(avname,sname)
             passwd = getpass.getpass()
-
         rc = OpenSimRemoteControl.OpenSimRemoteControl(endpoint)
         rc.DomainList = domains
         response = rc.AuthenticateAvatarByName(avname,passwd,lifespan)
         if not response['_Success'] :
             print 'Failed: ' + response['_Message']
             sys.exit(-1)
-
         expires = response['LifeSpan'] + int(time.time())
         print >> sys.stderr, 'capability granted, expires at %s' % time.asctime(time.localtime(expires))
 
@@ -83,20 +81,21 @@ def AuthByUserName(settings) :
         sim["Capability"] = response['Capability'].encode('ascii')
         sim["LifeSpan"] = response['LifeSpan']
 
-        rc_info = rc.Info()
-        sim["EndPoint"] = rc_info['SynchEndPoint'].encode('ascii')
-        sim["AsyncEndPoint"] = rc_info['AsyncEndPoint'].encode('ascii')
+        #rc_info = rc.Info()
+        #sim["EndPoint"] = rc_info['SynchEndPoint'].encode('ascii')
+        #sim["AsyncEndPoint"] = rc_info['AsyncEndPoint'].encode('ascii')
 
-        sim["Connector"] = rc
+        sim["RemoteControl"] = rc
         rc.Capability = uuid.UUID(sim["Capability"])
         rc.Scene = sname
+        rc.Binary = True
 
     return True
 
 def GenCoordinateMap(settings):
     map = settings["OpenSimConnector"]["Map"] = {}
     for _,sim in settings["OpenSimConnector"]["Scenes"].items():
-        map[str(sim["Location"])] = sim["Connector"]
+        map[str(sim["Location"])] = sim
     return map
 
 
@@ -116,28 +115,43 @@ def GenNameFromCoordinates(x, y, prefix = 'node') :
     nsdir = 'S' if y < 0 else 'N'
     return "%s%d%s%d%s" % (prefix, abs(x), ewdir, abs(y), nsdir)
 
-def CalculateOSCoordinates(x, y, builder):
-    locx = int(x / builder.RegionSizeX)
-    locy = int(y / builder.RegionSizeY)
+def GetSceneFromCoordinates(x,y,os_connector):
+    (_,_),scene = CalculateOSCoordinates(x, y, os_connector)
+    return scene
+
+# Converts World coordinates to OpenSim x,y,simulator coordinates.
+def CalculateOSCoordinates(x, y, os_connector):
+    locx = int(x / os_connector.RegionSizeX)
+    locy = int(y / os_connector.RegionSizeY)
     coord = [locx,locy]
 
-    scene = builder.RegionMap[str(coord)]
+    scene = os_connector.RegionMap[str(coord)]
 
-    convX = x % builder.RegionSizeX
-    convY = y % builder.RegionSizeY
+    convX = x % os_connector.RegionSizeX
+    convY = y % os_connector.RegionSizeY
 
     return (convX,convY),scene
 
-def CalculateOSCoordinatesFromOrigin(ox, oy, x, y, builder):
-    (conv_ox,conv_oy),conn = CalculateOSCoordinates(ox, oy, builder)
+# Calculates coordinates with origin from a given Scene/Simulator.
+def CalculateOSCoordinatesFromScene(x, y, scene, os_connector):
+    str_x,str_y = scene["Location"]
+
+    X = int(str_x) * os_connector.RegionSizeX
+    Y = int(str_y) * os_connector.RegionSizeY
+
+    return (x-X,y-Y)
+
+# Used to calculate OpenSim coordinates of roads with start and end points.
+def CalculateOSCoordinatesFromOrigin(ox, oy, x, y, os_connector):
+    (conv_ox,conv_oy),conn = CalculateOSCoordinates(ox, oy, os_connector)
 
     # Calculate region cartesian coordinates
-    rx = int(ox / builder.RegionSizeX)
-    ry = int(oy / builder.RegionSizeX)
+    rx = int(ox / os_connector.RegionSizeX)
+    ry = int(oy / os_connector.RegionSizeX)
 
     # Subtract region cartestian coordinates of origin * region size to obtain new destination coordinate
-    x -= rx * builder.RegionSizeX
-    y -= ry * builder.RegionSizeY
+    x -= rx * os_connector.RegionSizeX
+    y -= ry * os_connector.RegionSizeY
 
     return (conv_ox,conv_oy),(x,y),conn
 

@@ -164,7 +164,8 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             traci.vehicle.subscribe(v,[tc.VAR_POSITION, tc.VAR_SPEED, tc.VAR_ANGLE])
 
             vtype = traci.vehicle.getTypeID(v)
-            event = EventTypes.EventCreateObject(v, vtype)
+            pos = self.__NormalizeCoordinate(traci.vehicle.getPosition(v))
+            event = EventTypes.EventCreateObject(v, vtype, pos)
             self.PublishEvent(event)
 
     # -----------------------------------------------------------------
@@ -273,6 +274,7 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         self.XSize = self.SimulationBoundary[1][0] - self.XBase
         self.YBase = self.SimulationBoundary[0][1]
         self.YSize = self.SimulationBoundary[1][1] - self.YBase
+        self.__Logger.warn("starting sumo connector")
 
         # initialize the edge list, drop all the internal edges
         self.EdgeList = []

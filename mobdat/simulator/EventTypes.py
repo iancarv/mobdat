@@ -174,9 +174,11 @@ class ObjectEvent :
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 class EventCreateObject(ObjectEvent) :
     # -----------------------------------------------------------------
-    def __init__(self, identity, objtype) :
+    def __init__(self, identity, objtype, pos) :
         ObjectEvent.__init__(self, identity)
         self.ObjectType = objtype
+        # Need position to determine on which simulator should the object be created
+        self.ObjectPosition = pos
 
     # -----------------------------------------------------------------
     def __str__(self) :
@@ -214,7 +216,7 @@ class EventDeleteObject(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = super(EventCreateObject,self).__str__()
+        pstring = super(EventDeleteObject,self).__str__()
         return pstring
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -228,7 +230,7 @@ class EventPropertyChange(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = super(EventCreateObject,self).__str__()
+        pstring = super(EventPropertyChange,self).__str__()
         fstring = "{0},{1}:{2}"
         return fstring.format(pstring,self.ObjectProperty,self.ObjectValue)
 
@@ -245,7 +247,7 @@ class EventObjectDynamics(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = super(EventCreateObject,self).__str__()
+        pstring = super(EventObjectDynamics,self).__str__()
         fstring = "{0},x:{1},y:{2},z:{3}"
         return fstring.format(pstring,self.ObjectPosition.x,self.ObjectPosition.y,self.ObjectPosition.z)
 
@@ -273,7 +275,7 @@ class EventTrafficLightStateChange(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = super(EventCreateObject,self).__str__()
+        pstring = super(EventTrafficLightStateChange,self).__str__()
         fstring = "{0},state:{2}"
         return fstring.format(pstring,self.StopLightState)
 

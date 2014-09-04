@@ -12,7 +12,7 @@
 
     "Builder" :
     {
-	"ExtensionFiles" : ["networks/fullnet/dist_layout.py"]
+	"ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
     },
 
     "SocialConnector" :
@@ -37,6 +37,7 @@
 	{
 		"City00" :
 		{
+			"Name" : "City00",
 			"AvatarName" : "Test User",
 			"Password" : "test",
 			"EndPoint" : "http://parana.mdg.lab:9000/Dispatcher/",
@@ -44,6 +45,7 @@
 		},
 		"City01" :
 		{
+			"Name" : "City01",
 			"AvatarName" : "Test User",
 			"Password" : "test",
 			"EndPoint" : "http://ganges.mdg.lab:9000/Dispatcher/",
@@ -51,6 +53,7 @@
 		},
 		"City10" :
 		{
+			"Name" : "City10",
 			"AvatarName" : "Test User",
 			"Password" : "test",
 			"EndPoint" : "http://rhine.mdg.lab:9000/Dispatcher/",
@@ -58,6 +61,7 @@
 		},
 		"City11" :
 		{
+			"Name" : "City11",
 			"AvatarName" : "Test User",
 			"Password" : "test",
 			"EndPoint" : "http://hudson.mdg.lab:9000/Dispatcher/",

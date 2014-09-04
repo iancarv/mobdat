@@ -42,7 +42,6 @@ import logging, warnings
 
 import OpenSimRemoteControl
 import getpass
-from mobdat.common.Utilities import AuthByUserName
 
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
@@ -203,7 +202,6 @@ def Main() :
         AuthByUserName(rc, avname, passwd, domain, lifespan, \
                        settings["OpenSimConnector"]["Scenes"][sname])
     """
-    AuthByUserName(settings)
     Controller.Controller(settings)
 
 if __name__ == '__main__':
