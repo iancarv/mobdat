@@ -46,7 +46,7 @@ sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","p
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
 import EventTypes
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -86,6 +86,8 @@ class EventRouter :
                     return
 
                 self.RouteEvent(evtype, event)
+            except KeyboardInterrupt:
+                return
             except :
                 exctype, value =  sys.exc_info()[:2]
                 self._Logger.warn('failed with exception type %s; %s', exctype, str(value))

@@ -7,15 +7,15 @@ modification, are permitted provided that the following conditions are
 met:
 
 * Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer. 
+  this list of conditions and the following disclaimer.
 
 * Redistributions in binary form must reproduce the above copyright
   notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution. 
+  documentation and/or other materials provided with the distribution.
 
 * Neither the name of Intel Corporation nor the names of its
   contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission. 
+  this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -27,7 +27,7 @@ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
 PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @file    SumoConnector.py
 @author  Mic Bowman
@@ -39,7 +39,7 @@ and operations into and out of the sumo traffic simulator.
 """
 import os, sys
 import logging
-import subprocess, threading, string, time
+import subprocess
 
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
@@ -50,7 +50,7 @@ from sumolib import checkBinary
 
 import traci
 import traci.constants as tc
-import BaseConnector, EventRouter, EventHandler, EventTypes
+import BaseConnector, EventHandler, EventTypes
 from mobdat.common import ValueTypes
 
 import math
@@ -60,14 +60,14 @@ import math
 class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
 
     # -----------------------------------------------------------------
-    def __init__(self, evrouter, settings, world, netsettings) :
+    def __init__(self, evrouter, settings, world, netsettings, cname) :
         EventHandler.EventHandler.__init__(self, evrouter)
         BaseConnector.BaseConnector.__init__(self, settings, world, netsettings)
 
         self.__Logger = logging.getLogger(__name__)
 
         # the sumo time scale is 1sec per iteration so we need to scale
-        # to the 100ms target for our iteration time, this probably 
+        # to the 100ms target for our iteration time, this probably
         # should be computed based on the target step size
         self.TimeScale = 1.0 / self.Interval
 
@@ -123,7 +123,7 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         count = 0
         while self.CurrentEdgeList and count < self.EdgesPerIteration :
             edge = self.CurrentEdgeList.pop()
-            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge)) 
+            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge))
             count += 1
 
     # # -----------------------------------------------------------------
@@ -164,7 +164,8 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             traci.vehicle.subscribe(v,[tc.VAR_POSITION, tc.VAR_SPEED, tc.VAR_ANGLE])
 
             vtype = traci.vehicle.getTypeID(v)
-            event = EventTypes.EventCreateObject(v, vtype)
+            pos = self.__NormalizeCoordinate(traci.vehicle.getPosition(v))
+            event = EventTypes.EventCreateObject(v, vtype, pos)
             self.PublishEvent(event)
 
     # -----------------------------------------------------------------
@@ -187,7 +188,7 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
     # -----------------------------------------------------------------
     # def HandleRerouteVehicle(self, event) :
     #     traci.vehicle.rerouteTraveltime(str(event.ObjectIdentity))
- 
+
     # -----------------------------------------------------------------
     def HandleAddVehicleEvent(self, event) :
         self.__Logger.debug('add vehicle %s going from %s to %s', event.ObjectIdentity, event.Route, event.Target)
@@ -219,16 +220,16 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             self.HandleDepartedVehicles(self.CurrentStep)
             self.HandleVehicleUpdates(self.CurrentStep)
             self.HandleArrivedVehicles(self.CurrentStep)
-        except TypeError as detail: 
+        except TypeError as detail:
             self.__Logger.error("[sumoconector] simulation step failed with type error %s" % (str(detail)))
             sys.exit(-1)
-        except ValueError as detail: 
+        except ValueError as detail:
             self.__Logger.error("[sumoconector] simulation step failed with value error %s" % (str(detail)))
             sys.exit(-1)
-        except NameError as detail: 
+        except NameError as detail:
             self.__Logger.error("[sumoconector] simulation step failed with name error %s" % (str(detail)))
             sys.exit(-1)
-        except AttributeError as detail: 
+        except AttributeError as detail:
             self.__Logger.error("[sumoconnector] simulation step failed with attribute error %s" % (str(detail)))
             sys.exit(-1)
         except :
@@ -248,9 +249,9 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
     def HandleShutdownEvent(self, event) :
         try :
             idlist = traci.vehicle.getIDList()
-            for v in idlist : 
+            for v in idlist :
                 traci.vehicle.remove(v)
-        
+
             traci.close()
             sys.stdout.flush()
 
@@ -263,8 +264,8 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
     # -----------------------------------------------------------------
     def SimulationStart(self) :
         sumoBinary = checkBinary('sumo')
-        sumoCommandLine = [sumoBinary, "-c", self.ConfigFile, "-l", "logs/sumo.log"]
-        
+        sumoCommandLine = [sumoBinary, "-c", self.ConfigFile, "-l", "sumo.log"]
+
         self.SumoProcess = subprocess.Popen(sumoCommandLine, stdout=sys.stdout, stderr=sys.stderr)
         traci.init(self.Port)
 
@@ -273,12 +274,13 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         self.XSize = self.SimulationBoundary[1][0] - self.XBase
         self.YBase = self.SimulationBoundary[0][1]
         self.YSize = self.SimulationBoundary[1][1] - self.YBase
+        self.__Logger.warn("starting sumo connector")
 
         # initialize the edge list, drop all the internal edges
         self.EdgeList = []
         for edge in traci.edge.getIDList() :
             # this is just to ensure that everything is initialized first time
-            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge)) 
+            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge))
 
             # only keep the "real" edges for computation for now
             if not edge.startswith(':') :
@@ -290,7 +292,7 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         for tl in tllist :
             self.TrafficLights[tl] = traci.trafficlights.getRedYellowGreenState(tl)
             traci.trafficlights.subscribe(tl,[tc.TL_RED_YELLOW_GREEN_STATE])
-        
+
         # initialize the induction loops
         illist = traci.inductionloop.getIDList()
         for il in illist :
@@ -303,4 +305,3 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
 
         # all set... time to get to work!
         self.HandleEvents()
-

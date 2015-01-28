@@ -47,10 +47,6 @@ sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","p
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-import string
-
-from mobdat.common.graph.LayoutDecoration import *
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 class SumoBuilder :
@@ -177,7 +173,7 @@ class SumoBuilder :
 
             fp.write("\n")
 
-            for nname, node in self.World.IterNodes(nodetype = 'EndPoint') :
+            for name, node in self.World.IterNodes(nodetype = 'EndPoint') :
                 name = None
                 for edge in node.OutputEdges :
                     for redge in edge.EndNode.OutputEdges :

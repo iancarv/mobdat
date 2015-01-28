@@ -47,14 +47,14 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
 import heapq
-import BaseConnector, EventRouter, EventHandler, EventTypes, Traveler, Trip
+import BaseConnector, EventHandler, EventTypes, Traveler
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 class SocialConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
            
     # -----------------------------------------------------------------
-    def __init__(self, evrouter, settings, world, netsettings) :
+    def __init__(self, evrouter, settings, world, netsettings, cname) :
         EventHandler.EventHandler.__init__(self, evrouter)
         BaseConnector.BaseConnector.__init__(self, settings, world, netsettings)
 

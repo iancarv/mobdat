@@ -46,12 +46,11 @@ sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","p
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-import platform, time, threading, cmd, readline
+import platform, time, threading, cmd
 import EventRouter, EventTypes
+from mobdat.common.Utilities import AuthByUserName
 from mobdat.common import LayoutSettings, WorldInfo
 from multiprocessing import Process
-
-import json
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
@@ -59,9 +58,9 @@ import SumoConnector, OpenSimConnector, SocialConnector, StatsConnector
 
 _SimulationControllers = {
     'sumo' : SumoConnector.SumoConnector,
-    'opensim' : OpenSimConnector.OpenSimConnector,
     'social' : SocialConnector.SocialConnector,
-    'stats' : StatsConnector.StatsConnector
+    'stats' : StatsConnector.StatsConnector,
+    'opensim' : OpenSimConnector.OpenSimConnector
     }
 
 logger = logging.getLogger(__name__)
@@ -212,16 +211,18 @@ def Controller(settings) :
     """
 
     laysettings = LayoutSettings.LayoutSettings(settings)
-
     # load the world
     infofile = settings["General"].get("WorldInfoFile","info.js")
     logger.info('loading world data from %s',infofile)
     world = WorldInfo.WorldInfo.LoadFromFile(infofile)
 
     cnames = settings["General"].get("Connectors",['sumo', 'opensim', 'social', 'stats'])
-
+    #if 'opensim' in cnames:
+    #    cnames.remove('opensim')
+    #    for sname in settings["OpenSimConnector"]["Scenes"].keys():
+    #        _SimulationControllers['osc:'+sname] = OpenSimConnector.OpenSimConnector
+    #        cnames.append('osc:'+sname)
     evrouter = EventRouter.EventRouter()
-
     # initialize the connectors first
     connectors = []
     for cname in cnames :
@@ -229,7 +230,7 @@ def Controller(settings) :
             logger.warn('skipping unknown simulation connector; %s' % (cname))
             continue
 
-        connector = _SimulationControllers[cname](evrouter, settings, world, laysettings)
+        connector = _SimulationControllers[cname](evrouter, settings, world, laysettings, cname)
         connproc = Process(target=connector.SimulationStart, args=())
         connproc.start()
         connectors.append(connproc)

@@ -40,6 +40,9 @@ This is the main script for running the mobdat mobile data simulator.
 import sys, os
 import logging, logging.handlers, warnings
 
+import OpenSimRemoteControl
+import getpass
+
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
@@ -68,27 +71,6 @@ def ParseConfigurationFiles(cfiles) :
             sys.exit(-1)
 
     return config
-
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-def ParseEnvironment(config) :
-    capenv = os.environ.get('OS_REMOTECONTROL_CAP')
-    if capenv : 
-        [capability, expires] = capenv.split(':',1)
-        if expires and int(expires) > int(time.time()) :
-            config["OpenSimConnector"]["Capability"] = capability
-
-    scene = os.environ.get('OS_REMOTECONTROL_SCENE')
-    if scene :
-        config["OpenSimConnector"]["Scene"] = scene
-
-    endpoint = os.environ.get('OS_REMOTECONTROL_URL')
-    if endpoint :
-        config["OpenSimConnector"]["EndPoint"] = endpoint
-
-    asendpoint = os.environ.get('OS_REMOTECONTROL_UDP')
-    if asendpoint :
-        config["OpenSimConnector"]["AsyncEndPoint"] = asendpoint
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
@@ -176,9 +158,30 @@ def Main() :
     (options, remainder) = parser.parse_known_args()
     
     settings = ParseConfigurationFiles(options.config)
-    ParseEnvironment(settings)
+    #ParseEnvironment(settings)
+
     ParseCommandLine(settings,remainder)
 
+    # retrieving required capabilities from scenes
+    """
+    for sname,sim in settings["OpenSimConnector"]["Scenes"].items():
+        endpoint = sim["EndPoint"] if "EndPoint" in sim else \
+            exit('No endpoint defined for Scene {0}'.format(sname))
+        avname = sim["AvatarName"] if "AvatarName" in sim else \
+            exit('No avatar name specified to login in Scene {0}'.format(sname))
+        domain = sim["Domain"] if "Domain" in sim else ['Dispatcher', 'RemoteControl']
+        lifespan = sim["LifeSpan"] if "LifeSpan" in sim else 3600
+        passwd = sim["Password"] if "Password" in sim else None
+
+        rc = OpenSimRemoteControl.OpenSimRemoteControl(endpoint)
+
+        if not passwd :
+            print "Please type the password for User {0} in Scene {1}".format(avname,sname)
+            passwd = getpass.getpass()
+        settings["OpenSimConnector"]["Scenes"][sname] = {}
+        AuthByUserName(rc, avname, passwd, domain, lifespan, \
+                       settings["OpenSimConnector"]["Scenes"][sname])
+    """
     Controller.Controller(settings)
 
 if __name__ == '__main__':

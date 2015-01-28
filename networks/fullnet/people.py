@@ -53,6 +53,14 @@ import random, math
 
 logger = logging.getLogger('people')
 
+if 'world' not in globals() or 'world' not in locals():
+    world = None
+    exit('no world variable')
+
+if 'laysettings' not in globals() or 'laysettings' not in locals():
+    laysettings = None
+    exit('no laysettings variable')
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 wprof = world.AddPersonProfile('worker')
@@ -131,7 +139,7 @@ def PlacePeople() :
     for name, biz in bizlist.iteritems() :
         bprof = biz.EmploymentProfile
         for job, demand in bprof.JobList.iteritems() :
-            for p in range(0, demand) :
+            for _ in range(0, demand) :
                 people += 1
                 name = GenName(wprof.Name)
                 person = world.AddPerson(name, wprof)

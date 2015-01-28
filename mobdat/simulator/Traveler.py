@@ -49,9 +49,10 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 import random
 import Trip, LocationKeyMap, TravelerProfiles
 
-from mobdat.common import TravelTimeEstimator, ValueTypes
-from mobdat.common.timedevent import TimedEvent, TimedEventList, IntervalVariable
-from mobdat.common.graph import SocialDecoration 
+from mobdat.common import TravelTimeEstimator
+from mobdat.common.timedevent import TimedEvent, TimedEventList
+from mobdat.common.graph import SocialDecoration
+from mobdat.common.graph.SocialDecoration import BusinessType
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,30 @@ class Traveler :
         self.EventList = None
         if self.BuildDailyEvents(self.Connector.WorldDay) :
             self._ScheduleFirstTrip()
+
+    # -----------------------------------------------------------------
+    def FindBusinessByType(self, biztype, bizclass) :
+        if (biztype, bizclass) not in self.BusinessCache :
+            predicate = SocialDecoration.BusinessProfileDecoration.BusinessTypePred(biztype, bizclass)
+            self.BusinessCache[(biztype, bizclass)] = self.World.FindNodes(nodetype = 'Business', predicate = predicate)
+
+        return self.BusinessCache[(biztype, bizclass)]
+
+    # -----------------------------------------------------------------
+    def InitializeLocationNameMap(self) :
+        self.LocationNameMap = {}
+        self.LocationNameMap['home'] = [ self.Person ]
+        self.LocationNameMap['work'] = [ self.Employer ]
+
+        self.LocationNameMap['coffee'] = self.FindBusinessByType(BusinessType.Food, 'coffee')
+        self.LocationNameMap['lunch'] = self.FindBusinessByType(BusinessType.Food, 'fastfood')
+        self.LocationNameMap['dinner'] = self.FindBusinessByType(BusinessType.Food, 'small-restaurant')
+        self.LocationNameMap['shopping'] = self.FindBusinessByType(BusinessType.Service, None)
+
+    # -----------------------------------------------------------------
+    def ResolveLocationName(self, name) :
+        location = random.choice(self.LocationNameMap[name])
+        return location.ResidesAt
 
     # -----------------------------------------------------------------
     def BuildDailyEvents(self, worldday, addextras = True) :
