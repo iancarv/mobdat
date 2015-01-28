@@ -67,7 +67,8 @@ def ConvertEdgeCoordinate(prefix, p1, p2) :
 
 def BuildCity(city_name,empty_world):
     city_name += ':'
-        # -----------------------------------------------------------------
+    print city_name
+    # -----------------------------------------------------------------
     # -----------------------------------------------------------------
     # residence and business nodes
     rntype = empty_world.AddIntersectionType('townhouse', 'priority')
@@ -84,20 +85,23 @@ def BuildCity(city_name,empty_world):
     e2A = empty_world.AddRoadType('etype2A', 2, 70, 3.0, sig='2L')
     e2B = empty_world.AddRoadType('etype2B', 2, 40, 2.0, sig='2L')
     e2C = empty_world.AddRoadType('etype2C', 2, 20, 1.0, sig='2L')
+    e3A = empty_world.AddRoadType('etype3A', 3, 70, 3.0, sig='3L')
+    e3B = empty_world.AddRoadType('etype3B', 3, 40, 2.0, sig='3L')
+    e3C = empty_world.AddRoadType('etype3C', 3, 20, 1.0, sig='3L')
 
-    e1way = empty_world.AddRoadType('1way2lane', 2, 40, 2.0, sig='2L', center=True)
-
+    e2oneway = empty_world.AddRoadType('1way2lane', 2, 40, 2.0, sig='2L', center=True)
+    e3oneway = empty_world.AddRoadType('1way3lane', 3, 40, 2.0, sig='3L', center=True)
     # driveway
-    dntype = empty_world.AddIntersectionType('driveway', 'priority_stop')
-    edrv = empty_world.AddRoadType('driveway', 1, 10, 0.5, sig='D')
+    dntype = empty_world.AddIntersectionType('driveway_node', 'priority_stop')
+    edrv = empty_world.AddRoadType('driveway_road', 1, 10, 0.5, wid=2.0, sig='D')
 
     # parking lots
     #plotnode  = empty_world.AddIntersectionType('parking_drive_intersection', 'priority', False)
     #plotentry = empty_world.AddRoadType('parking_entry', 1, 20, 1.0, sig='1L', render=False)
     #plotdrive = empty_world.AddRoadType('parking_drive', 1, 10, 0.5, sig='D', render=False)
     plotnode  = empty_world.AddIntersectionType('parking_drive_intersection', 'priority')
-    plotentry = empty_world.AddRoadType('parking_entry', 1, 20, 1.0, sig='P')
-    plotdrive = empty_world.AddRoadType('parking_drive', 1, 10, 0.5, sig='D')
+    plotentry = empty_world.AddRoadType('parking_entry', 1, 20, 1.0,wid=2.0, sig='P')
+    plotdrive = empty_world.AddRoadType('parking_drive', 1, 10, 0.5,wid=2.0, sig='D')
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # MAIN GRIDS
@@ -144,14 +148,14 @@ def BuildCity(city_name,empty_world):
     empty_world.DropEdgeByName(city_name + 'plaza0E250N=O=' + city_name + 'plaza50E250N')
 
     # The one way streets are all 2 lanes
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza50[EW].*=O=' + city_name + 'plaza50[EW].*'.format(city_name,city_name),e1way)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza.*250[NS]=O=' + city_name + 'plaza.*250[NS]',e1way)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza50[EW].*=O=' + city_name + 'plaza50[EW].*'.format(city_name,city_name),e3oneway)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza.*250[NS]=O=' + city_name + 'plaza.*250[NS]',e3oneway)
 
     # The central north/south road is four lane
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]100[NS]=O=' + city_name + 'plaza[0-9]*[EW]100[NS]',e2A)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]0N=O=' + city_name + 'plaza[0-9]*[EW]0N',e2A)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=' + city_name + 'plaza0E[0-9]*[NS]',e2A)
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=' + city_name + 'plaza0E[0-9]*[NS]',e2A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]100[NS]=O=' + city_name + 'plaza[0-9]*[EW]100[NS]',e3A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza[0-9]*[EW]0N=O=' + city_name + 'plaza[0-9]*[EW]0N',e3A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=' + city_name + 'plaza0E[0-9]*[NS]',e3A)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza0E[0-9]*[NS]=O=' + city_name + 'plaza0E[0-9]*[NS]',e3A)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # CONNECT THE GRIDS
@@ -162,22 +166,22 @@ def BuildCity(city_name,empty_world):
     empty_world.AddIntersection(0, 300, sntype, city_name + 'main')  # north end of the plaza
 
     # And connect them to the east and west main grids
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W300N'],empty_world.Nodes[city_name + 'main0E300N'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E300N'],empty_world.Nodes[city_name + 'main0E300N'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W300S'],empty_world.Nodes[city_name + 'main0E300S'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E300S'],empty_world.Nodes[city_name + 'main0E300S'],e2A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W300N'],empty_world.Nodes[city_name + 'main0E300N'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E300N'],empty_world.Nodes[city_name + 'main0E300N'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W300S'],empty_world.Nodes[city_name + 'main0E300S'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E300S'],empty_world.Nodes[city_name + 'main0E300S'],e3A)
 
     # Connect the plaza nodes to the north & south ends
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'plaza0E250S'],empty_world.Nodes[city_name + 'main0E300S'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'plaza0E250N'],empty_world.Nodes[city_name + 'main0E300N'],e2A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'plaza0E250S'],empty_world.Nodes[city_name + 'main0E300S'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'plaza0E250N'],empty_world.Nodes[city_name + 'main0E300N'],e3A)
 
     # Connect the plaza nodes to the east and west roads
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W100N'],empty_world.Nodes[city_name + 'plaza50W100N'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W100S'],empty_world.Nodes[city_name + 'plaza50W100S'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E100N'],empty_world.Nodes[city_name + 'plaza50E100N'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E100S'],empty_world.Nodes[city_name + 'plaza50E100S'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W0N'],empty_world.Nodes[city_name + 'plaza50W0N'],e2A)
-    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E0N'],empty_world.Nodes[city_name + 'plaza50E0N'],e2A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W100N'],empty_world.Nodes[city_name + 'plaza50W100N'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W100S'],empty_world.Nodes[city_name + 'plaza50W100S'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E100N'],empty_world.Nodes[city_name + 'plaza50E100N'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E100S'],empty_world.Nodes[city_name + 'plaza50E100S'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W0N'],empty_world.Nodes[city_name + 'plaza50W0N'],e3A)
+    empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E0N'],empty_world.Nodes[city_name + 'plaza50E0N'],e3A)
 
     empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100W200S'], empty_world.Nodes[city_name + 'plaza50W200S'], e1A)
     empty_world.ConnectIntersections(empty_world.Nodes[city_name + 'main100E200S'], empty_world.Nodes[city_name + 'plaza50E200S'], e1A)
@@ -289,7 +293,10 @@ for name,city in laysettings.Cities.items():
         if "Coord" in node.Decorations.keys():
             node.Decorations["Coord"].X += city["Offset"][0]
             node.Decorations["Coord"].Y += city["Offset"][1]
-        world.AddNode(node)
+        try:
+            world.AddNode(node)
+        except:
+            pass
 
     for name,edge in new_world.IterEdges():
         world.AddEdge(edge)
