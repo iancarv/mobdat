@@ -67,7 +67,6 @@ def ConvertEdgeCoordinate(prefix, p1, p2) :
 
 def BuildCity(city_name,empty_world):
     city_name += ':'
-    print city_name
     # -----------------------------------------------------------------
     # -----------------------------------------------------------------
     # residence and business nodes

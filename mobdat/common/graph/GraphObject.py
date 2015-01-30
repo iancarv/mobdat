@@ -61,6 +61,11 @@ class GraphObject :
         self.Decorations = {}
         self.Collections = {}
 
+        self.InheritedDecorations = {}
+
+        self.CollectionNodeTypes = {}
+        self.OutputEdgesNodeTypes = {}
+
         self.OutputEdges = []
         self.InputEdges = []
 
@@ -74,23 +79,26 @@ class GraphObject :
         Look for a reference to the attribute among the collection of decorations
         associated with the object and in the output edges. 
         """
-
+        #provider = self.FindDecorationProvider(attr)
         # First look for a decoration with the right name
-        provider = self.FindDecorationProvider(attr)
+        provider = None
+        if attr in self.Decorations:
+            provider = self
+        elif attr in self.InheritedDecorations:
+            provider = self.InheritedDecorations[attr]
+
         if provider :
             return provider.Decorations[attr]
 
         # Check to see if the attribute is the name of a collection in which
         # this node is a member, gives explicit access to the collections
-        for coll in self.Collections.itervalues() :
-            if attr == coll.Decorations['NodeType'].Name :
-                return coll
+        if attr in self.CollectionNodeTypes:
+            return self.CollectionNodeTypes[attr]
 
         # Next look for an edge with the right name, if there
         # are multiple then take the first one found
-        for edge in self.OutputEdges :
-            if edge.NodeType.Name == attr :
-                return edge.EndNode
+        if attr in self.OutputEdgesNodeTypes:
+            return self.OutputEdgesNodeTypes[attr]
 
         nodetype = self.__class__.__name__
         if 'NodeType' in self.Decorations :
@@ -169,14 +177,36 @@ class GraphObject :
     # -----------------------------------------------------------------
     def AddOutputEdge(self, edge) :
         self.OutputEdges.append(edge)
+        self.OutputEdgesNodeTypes[edge.Decorations['NodeType'].Name] = edge
 
     # -----------------------------------------------------------------
     def AddToCollection(self, collection) :
         self.Collections[collection.Name] = collection
 
+        for attr in collection.Decorations.keys():
+            self.InheritedDecorations[attr] = collection
+
+        self.CollectionNodeTypes[collection.Decorations['NodeType'].Name] = collection
+
     # -----------------------------------------------------------------
     def DropFromCollection(self, collection) :
         del self.Collections[collection.Name]
+
+        # Clean up inherited decorations
+        delnames = []
+        delnodetypes = []
+        for attr,coll in self.InheritedDecorations.items():
+            if (coll.Name == collection.Name):
+                delnames.append(attr)
+
+        for attr,coll in self.CollectionNodeTypes.items():
+            if (coll.Name == collection.Name):
+                delnodetypes.append(attr)
+
+        for name in delnames:
+            del self.InheritedDecorations[name]
+        for nodetype in delnodetypes:
+            del self.CollectionNodeTypes[nodetype]
 
     # -----------------------------------------------------------------
     def AddDecoration(self, decoration) :
@@ -195,11 +225,9 @@ class GraphObject :
         """
         if attr in self.Decorations :
             return self
-
         # inherit the decorations of all the collections the object is in
-        for coll in self.Collections.itervalues() :
-            if attr in coll.Decorations :
-                return coll
+        elif attr in self.InheritedDecorations:
+            return self.InheritedDecorations[attr]
 
         return None
 

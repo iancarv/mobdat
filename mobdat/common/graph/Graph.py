@@ -165,7 +165,7 @@ class Graph :
             collection.DropMember(node)
 
         # drop all nodes that are a member of this one
-        for obj in node.Members[:] :
+        for obj in node.Members :
             node.DropMember(obj)
 
         for edge in node.InputEdges[:] :

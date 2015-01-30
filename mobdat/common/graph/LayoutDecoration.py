@@ -480,7 +480,10 @@ class BusinessLocationDecoration(Decoration) :
 
         # Return the capsule where the business is assigned, with BusinessLocation nodes
         # there should really only be one capsule
-        return random.choice(self.HostObject.Members)
+        if len(self.HostObject.Members) > 0:
+            return random.sample(self.HostObject.Members,1)[0]
+        else:
+            raise IndexError
 
     # -----------------------------------------------------------------
     def Dump(self) :

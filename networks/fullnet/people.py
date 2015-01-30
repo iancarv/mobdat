@@ -40,6 +40,10 @@ social framework including people and businesses.
 
 import os, sys
 import logging
+from multiprocessing import Pool
+from copy import copy,deepcopy
+
+sys.setrecursionlimit(1000000)
 
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
@@ -48,6 +52,7 @@ sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","p
 
 from mobdat.common.Utilities import GenName
 from mobdat.common.graph import Generator, Propagator, SocialEdges, SocialNodes
+from mobdat.common.graph.SocialDecoration import BusinessProfileDecoration, BusinessType
 
 import random, math
 
@@ -190,32 +195,42 @@ for name, biz in world.IterNodes(nodetype = 'Business') :
 
 # -----------------------------------------------------------------
 bizcache = {}
+people = {}
+
 def PropagateBusinessPreference(people, biztype, bizclass, seedsize = (7, 13)) :
     global bizcache, world
 
     if (biztype, bizclass) not in bizcache :
-        bizcache[(biztype, bizclass)] = SocialDecoration.BusinessProfileDecoration.FindByType(world, biztype, bizclass)
+        bizcache[(biztype, bizclass)] = BusinessProfileDecoration.FindByType(world, biztype, bizclass)
 
     bizlist = bizcache[(biztype, bizclass)]
 
     incr = len(people) / 100.0
-
+    res = []
+    pool = Pool(processes=8)
     bizcount = len(bizlist)
+    processes = []
     for biz in bizlist :
         logger.info('generating preferences for {0}, {1} remaining'.format(biz.Name, bizcount))
         seedcount = random.randint(int(incr * seedsize[0]), int(incr * seedsize[1]))
         seeds = set(random.sample(people, seedcount))
-
         # Propagator.PropagateMaximumPreference(seeds, biz.Name, (0.3, 0.9), 0.1)
-        Propagator.PropagateAveragePreference(seeds, biz.Name, (0.7, 0.9), 0.1)
+        processes.append(pool.apply_async(Propagator.PropagateAveragePreference, (seeds, biz.Name, (0.7, 0.9), 0.1)))
         bizcount -= 1
 
+    for p in processes:
+        res = p.get()
+        for person in res[0]:
+            node = world.FindNodeByName(person.Name)
+            node.Preference.SetWeight(res[1],res[2])
+
 people = world.FindNodes(nodetype = 'Person')
-PropagateBusinessPreference(people, SocialDecoration.BusinessType.Food, 'coffee')
-PropagateBusinessPreference(people, SocialDecoration.BusinessType.Food, 'fastfood')
-PropagateBusinessPreference(people, SocialDecoration.BusinessType.Food, 'small-restaurant')
-PropagateBusinessPreference(people, SocialDecoration.BusinessType.Food, 'large-restaurant')
-PropagateBusinessPreference(people, SocialDecoration.BusinessType.Service, None)
+
+PropagateBusinessPreference(people, BusinessType.Food, 'coffee')
+PropagateBusinessPreference(people, BusinessType.Food, 'fastfood')
+PropagateBusinessPreference(people, BusinessType.Food, 'small-restaurant')
+PropagateBusinessPreference(people, BusinessType.Food, 'large-restaurant')
+PropagateBusinessPreference(people, BusinessType.Service, None)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

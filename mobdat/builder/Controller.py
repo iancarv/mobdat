@@ -41,6 +41,7 @@ clock ticks.
 
 import os, sys, traceback
 import logging
+import cProfile
 
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
@@ -72,6 +73,7 @@ def Controller(settings, pushlist) :
 
     for cf in settings["Builder"].get("ExtensionFiles",[]) :
         try :
+            #cProfile.runctx('execfile(cf,dbbindings)',{'cf':cf,'dbbindings':dbbindings},{})
             execfile(cf, dbbindings)
             logger.info('loaded extension file %s', cf)
         except :

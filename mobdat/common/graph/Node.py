@@ -82,7 +82,7 @@ class Node(GraphObject) :
         if not name : name = GenNodeName(prefix)
         GraphObject.__init__(self, name)
 
-        self.Members = []
+        self.Members = set()
         for member in members :
             self.AddMember(member)
 
@@ -92,7 +92,7 @@ class Node(GraphObject) :
         member.AddToCollection(self)
 
         # add to the group the reference to the object
-        self.Members.append(member)
+        self.Members.add(member)
 
     # -----------------------------------------------------------------
     def DropMember(self, member) :
