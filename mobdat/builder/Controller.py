@@ -104,11 +104,11 @@ def Controller(settings, pushlist) :
 
     for push in pushlist :
         if push == 'opensim' :
-            os = OpenSimBuilder.OpenSimBuilder(settings, world, laysettings)
-            os.PushNetworkToOpenSim()
+            osb = OpenSimBuilder.OpenSimBuilder(settings, world, laysettings)
+            osb.PushNetworkToOpenSim()
         elif push == 'sumo' :
-            sc = SumoBuilder.SumoBuilder(settings, world, laysettings)
-            sc.PushNetworkToSumo()
+            scb = SumoBuilder.SumoBuilder(settings, world, laysettings)
+            scb.PushNetworkToSumo()
 
     # write the network information back out to the layinfo file
     infofile = settings["General"].get("WorldInfoFile","info.js")
@@ -122,3 +122,6 @@ def Controller(settings, pushlist) :
     with open(infofile, "w") as fp :
         # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)
         json.dump(world.Dump(), fp, ensure_ascii=True)
+
+    if partial_save and os.path.isfile(partial_save):
+        os.remove(partial_save)

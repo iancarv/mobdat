@@ -217,7 +217,6 @@ def PropagateBusinessPreference(people, biztype, bizclass, seedsize = (7, 13)) :
         bizcount -= 1
         for person in seeds:
             ret_people.append((person.Name, biz.Name, person.Preference.GetWeight(biz.Name)))
-    logger.warn("Returning: {0}".format(ret_people))
     return ret_people
 
 def MultiprocessPropagation(btype,sclass):
