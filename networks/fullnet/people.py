@@ -239,8 +239,8 @@ for res in results:
     try:
         solution = res.get()
         for avg_pref in solution:
-            node = world.FindNodeByName(res[0])
-            node.Preference.SetWeight(res[1],res[2])
+            node = world.FindNodeByName(avg_pref[0])
+            node.Preference.SetWeight(avg_pref[1],avg_pref[2])
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback,
