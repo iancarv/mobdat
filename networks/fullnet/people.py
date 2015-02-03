@@ -238,7 +238,6 @@ for arg in args:
 for res in results:
     try:
         solution = res.get()
-        print solution
         for avg_pref in solution:
             node = world.FindNodeByName(res[0])
             node.Preference.SetWeight(res[1],res[2])
