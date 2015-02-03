@@ -86,11 +86,20 @@ class WorldBuilder(WorldInfo.WorldInfo) :
         graph = WorldBuilder()
         graph.Load(data)
 
+        graph.step = data["step"] if "step" in data else []
+
         return graph
 
     # -----------------------------------------------------------------
     def __init__(self) :
         WorldInfo.WorldInfo.__init__(self)
+
+    def Dump(self):
+        res = WorldInfo.WorldInfo.Dump(self)
+        if self.step:
+            logger.warn("Saving intermediary steps {0}".format(self.step))
+            res["step"] = self.step
+        return res
 
     # =================================================================
     # =================================================================

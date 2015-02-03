@@ -222,6 +222,8 @@ def PropagateAveragePreference(seeds, preference, seedweight, mindelta) :
     logger.info('total nodes process {0} for preference {1}'.format(totalprocessed, preference))
     logger.info('time taken {0}'.format(_Timer() - stime))
 
+
+
 # -----------------------------------------------------------------
 def xPropagateAveragePreference(seeds, preference, seedweight, mindelta) :
     """

@@ -12,7 +12,8 @@
 
     "Builder" :
     {
-	"ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
+        "ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"],
+        "PartialSave" : "networks/fullnet/data/partial.js"
     },
 
     "SocialConnector" :

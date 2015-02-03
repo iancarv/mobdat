@@ -4,9 +4,11 @@
 *.xml
 *.project
 *.pydevproject
+worldinfo_backup
 build
 layinfo.js
 locinfo.js
 bizinfo.js
 perinfo.js
 worldinfo.js
+partial*.js

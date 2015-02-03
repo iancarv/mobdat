@@ -48,12 +48,11 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
 import json
-
 from mobdat.common import LayoutSettings
 from mobdat.builder import WorldBuilder, OpenSimBuilder, SumoBuilder
 
 logger = logging.getLogger(__name__)
-
+world = {}
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 def Controller(settings, pushlist) :
@@ -67,14 +66,37 @@ def Controller(settings, pushlist) :
     laysettings = LayoutSettings.LayoutSettings(settings)
 
     loadfile = settings["Builder"].get("LoadFile",None)
-    world = WorldBuilder.WorldBuilder.LoadFromFile(loadfile) if loadfile else WorldBuilder.WorldBuilder()
+    partial_save = settings["Builder"].get("PartialSave",None)
+
+    if loadfile:
+        world = WorldBuilder.WorldBuilder.LoadFromFile(loadfile)
+    else:
+        if partial_save:
+            try:
+                world = WorldBuilder.WorldBuilder.LoadFromFile(partial_save)
+            except (ValueError, IOError):
+                logger.warn('could not find partial save file, starting new world.')
+                world = WorldBuilder.WorldBuilder()
+                world.step = []
+            except:
+                raise
 
     dbbindings = {"laysettings" : laysettings, "world" : world}
 
     for cf in settings["Builder"].get("ExtensionFiles",[]) :
         try :
             #cProfile.runctx('execfile(cf,dbbindings)',{'cf':cf,'dbbindings':dbbindings},{})
-            execfile(cf, dbbindings)
+            if partial_save:
+                if cf not in world.step:
+                    global world
+                    global laysettings
+                    execfile(cf,globals())
+                    world.step.append(cf)
+                    with open(partial_save, "w") as fp:
+                        json.dump(world.Dump(),fp,ensure_ascii=True)
+                    logger.info("saved partial world for {0}".format(cf))
+            else:
+                execfile(cf, dbbindings)
             logger.info('loaded extension file %s', cf)
         except :
             logger.warn('unhandled error processing extension file %s\n%s', cf, traceback.format_exc(10))
@@ -91,6 +113,11 @@ def Controller(settings, pushlist) :
     # write the network information back out to the layinfo file
     infofile = settings["General"].get("WorldInfoFile","info.js")
     logger.info('saving world data to %s',infofile)
+
+    i = 0
+    while os.path.isfile(infofile):
+        infofile = '{0}_{1}'.format(infofile,i)
+        i+=1
 
     with open(infofile, "w") as fp :
         # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)

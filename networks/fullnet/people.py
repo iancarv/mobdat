@@ -39,32 +39,35 @@ social framework including people and businesses.
 """
 
 import os, sys
+import time
+import traceback
+import inspect
 import logging
-from multiprocessing import Pool
-from copy import copy,deepcopy
 
-sys.setrecursionlimit(1000000)
+from multiprocessing import Pool
 
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
+
 #sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 #sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
 from mobdat.common.Utilities import GenName
-from mobdat.common.graph import Generator, Propagator, SocialEdges, SocialNodes
+from mobdat.common.graph import Generator, SocialEdges, SocialNodes
+from mobdat.common.graph.Propagator import PropagateAveragePreference
 from mobdat.common.graph.SocialDecoration import BusinessProfileDecoration, BusinessType
 
 import random, math
 
 logger = logging.getLogger('people')
-
-if 'world' not in globals() or 'world' not in locals():
+if 'world' not in globals() and 'world' not in locals():
     world = None
     exit('no world variable')
 
-if 'laysettings' not in globals() or 'laysettings' not in locals():
+if 'laysettings' not in globals() and 'laysettings' not in locals():
     laysettings = None
     exit('no laysettings variable')
+
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -196,41 +199,54 @@ for name, biz in world.IterNodes(nodetype = 'Business') :
 # -----------------------------------------------------------------
 bizcache = {}
 people = {}
-
 def PropagateBusinessPreference(people, biztype, bizclass, seedsize = (7, 13)) :
     global bizcache, world
 
     if (biztype, bizclass) not in bizcache :
         bizcache[(biztype, bizclass)] = BusinessProfileDecoration.FindByType(world, biztype, bizclass)
-
     bizlist = bizcache[(biztype, bizclass)]
-
     incr = len(people) / 100.0
-    res = []
-    pool = Pool(processes=8)
     bizcount = len(bizlist)
-    processes = []
+    ret_people = []
     for biz in bizlist :
-        logger.info('generating preferences for {0}, {1} remaining'.format(biz.Name, bizcount))
+        #logger.info('generating preferences for {0}, {1} remaining'.format(biz.Name, bizcount))
         seedcount = random.randint(int(incr * seedsize[0]), int(incr * seedsize[1]))
         seeds = set(random.sample(people, seedcount))
         # Propagator.PropagateMaximumPreference(seeds, biz.Name, (0.3, 0.9), 0.1)
-        processes.append(pool.apply_async(Propagator.PropagateAveragePreference, (seeds, biz.Name, (0.7, 0.9), 0.1)))
+        PropagateAveragePreference(seeds, biz.Name, (0.7, 0.9), 0.1)
         bizcount -= 1
+        for person in seeds:
+            ret_people.append((person.Name, biz.Name, person.Preference.GetWeight(biz.Name)))
+    logger.warn("Returning: {0}".format(ret_people))
+    return ret_people
 
-    for p in processes:
-        res = p.get()
-        for person in res[0]:
-            node = world.FindNodeByName(person.Name)
-            node.Preference.SetWeight(res[1],res[2])
+def MultiprocessPropagation(btype,sclass):
+    ppl = world.FindNodes(nodetype = 'Person')
+    res_value = PropagateBusinessPreference(ppl,btype,sclass)
+    return res_value
 
 people = world.FindNodes(nodetype = 'Person')
+pool = Pool(processes=8)
 
-PropagateBusinessPreference(people, BusinessType.Food, 'coffee')
-PropagateBusinessPreference(people, BusinessType.Food, 'fastfood')
-PropagateBusinessPreference(people, BusinessType.Food, 'small-restaurant')
-PropagateBusinessPreference(people, BusinessType.Food, 'large-restaurant')
-PropagateBusinessPreference(people, BusinessType.Service, None)
+args = ((BusinessType.Food,'coffee'),(BusinessType.Food,'fastfood'),(BusinessType.Food,'small-restaurant'),
+    (BusinessType.Food,'large-restaurant'),(BusinessType.Service,None))
+results = []
+
+for arg in args:
+    results.append(pool.apply_async(MultiprocessPropagation, arg))
+
+for res in results:
+    try:
+        solution = res.get()
+        print solution
+        for avg_pref in solution:
+            node = world.FindNodeByName(res[0])
+            node.Preference.SetWeight(res[1],res[2])
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback,
+                              limit=None, file=sys.stdout)
+        raise
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
