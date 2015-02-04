@@ -100,6 +100,10 @@ class GraphObject :
         if attr in self.OutputEdgesNodeTypes:
             return self.OutputEdgesNodeTypes[attr]
 
+        # If nothing else works, lets try outside of the cache: maybe some new
+        # collection was added
+        self._LastResortSearch(attr)
+
         nodetype = self.__class__.__name__
         if 'NodeType' in self.Decorations :
             nodetype = self.Decorations['NodeType'].Name
@@ -212,6 +216,20 @@ class GraphObject :
     def AddDecoration(self, decoration) :
         decoration.HostObject = self
         self.Decorations[decoration.DecorationName] = decoration
+
+    # -----------------------------------------------------------------
+    def _LastResortSearch(self, attr):
+        # Check to see if the attribute is the name of a collection in which
+        # this node is a member, gives explicit access to the collections
+        for coll in self.Collections.itervalues() :
+            if attr == coll.Decorations['NodeType'].Name :
+                return coll
+
+        # Next look for an edge with the right name, if there
+        # are multiple then take the first one found
+        for edge in self.OutputEdges :
+            if edge.NodeType.Name == attr :
+                return edge.EndNode
 
     # -----------------------------------------------------------------
     def FindDecorationProvider(self, attr) :

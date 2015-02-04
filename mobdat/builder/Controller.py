@@ -51,6 +51,9 @@ import json
 from mobdat.common import LayoutSettings
 from mobdat.builder import WorldBuilder, OpenSimBuilder, SumoBuilder
 
+global world
+global laysettings
+
 logger = logging.getLogger(__name__)
 world = {}
 # -----------------------------------------------------------------
@@ -69,10 +72,12 @@ def Controller(settings, pushlist) :
     partial_save = settings["Builder"].get("PartialSave",None)
 
     if loadfile:
+        logger.warn('Loading world info from js file. This may take a few minutes...')
         world = WorldBuilder.WorldBuilder.LoadFromFile(loadfile)
     else:
         if partial_save:
             try:
+                logger.warn('Loading partial world info from js file. This may take a few minutes...')
                 world = WorldBuilder.WorldBuilder.LoadFromFile(partial_save)
             except (ValueError, IOError):
                 logger.warn('could not find partial save file, starting new world.')
@@ -88,8 +93,6 @@ def Controller(settings, pushlist) :
             #cProfile.runctx('execfile(cf,dbbindings)',{'cf':cf,'dbbindings':dbbindings},{})
             if partial_save:
                 if cf not in world.step:
-                    global world
-                    global laysettings
                     execfile(cf,globals())
                     world.step.append(cf)
                     with open(partial_save, "w") as fp:
@@ -116,8 +119,9 @@ def Controller(settings, pushlist) :
 
     i = 0
     while os.path.isfile(infofile):
-        infofile = '{0}_{1}'.format(infofile,i)
+        tmpfile = '{0}_{1}'.format(infofile,i)
         i+=1
+    infofile = tmpfile
 
     with open(infofile, "w") as fp :
         # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)

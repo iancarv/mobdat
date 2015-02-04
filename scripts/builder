@@ -165,7 +165,7 @@ def Main() :
     (options, remainder) = parser.parse_known_args()
     
     settings = ParseConfigurationFiles(options.config)
-    ParseEnvironment(settings)
+    #ParseEnvironment(settings)
     pushlist = ParseCommandLine(settings,remainder)
 
     Controller.Controller(settings, pushlist)
