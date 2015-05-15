@@ -6,14 +6,15 @@
         "SecondsPerStep" : 2.0,
         "StartTimeOfDay" : 3.0,
         "MaximumTravelers" : 0, 
-	"WorldInfoFile" : "networks/fullnet/data/worldinfo.js",
+	"WorldInfoFile" : "../data/worldinfo.js",
         "Connectors" : ["opensim", "sumo", "social", "stats"]
     },
 
     "Builder" :
     {
         "ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"],
-        "PartialSave" : "networks/fullnet/data/partial.js"
+        "PartialSave" : "/home/arthur/workspace/data/partial.js",
+        "LoadFile" : "/home/arthur/workspace/data/worldinfo.js"
     },
 
     "SocialConnector" :

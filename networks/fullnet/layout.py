@@ -47,11 +47,11 @@ from mobdat.common.Utilities import GenName, GenNameFromCoordinates
 from mobdat.common.graph.SocialDecoration import BusinessType
 
 logger = logging.getLogger('layout')
-if 'world' not in globals() or 'world' not in locals():
+if 'world' not in globals() and 'world' not in locals():
     world = None
     exit('no world global variable')
 
-if 'laysettings' not in globals() or 'laysettings' not in locals():
+if 'laysettings' not in globals() and 'laysettings' not in locals():
     laysettings = None
     exit('no laysettings variable')
 # -----------------------------------------------------------------

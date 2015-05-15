@@ -48,11 +48,11 @@ from mobdat.common.graph.SocialDecoration import BusinessType
 from copy import deepcopy, copy
 
 logger = logging.getLogger('layout')
-if 'world' not in globals() or 'world' not in locals():
+if 'world' not in globals() and 'world' not in locals():
     world = None
     exit('no world defined')
 
-if 'laysettings' not in globals() or 'laysettings' not in locals():
+if 'laysettings' not in globals() and 'laysettings' not in locals():
     laysettings = None
     exit('no laysettings defined')
 # -----------------------------------------------------------------
@@ -90,6 +90,7 @@ def BuildCity(city_name,empty_world):
 
     e2oneway = empty_world.AddRoadType('1way2lane', 2, 40, 2.0, sig='2L', center=True)
     e3oneway = empty_world.AddRoadType('1way3lane', 3, 40, 2.0, sig='3L', center=True)
+
     # driveway
     dntype = empty_world.AddIntersectionType('driveway_node', 'priority_stop')
     edrv = empty_world.AddRoadType('driveway_road', 1, 10, 0.5, wid=2.0, sig='D')
@@ -147,7 +148,7 @@ def BuildCity(city_name,empty_world):
     empty_world.DropEdgeByName(city_name + 'plaza0E250N=O=' + city_name + 'plaza50E250N')
 
     # The one way streets are all 2 lanes
-    empty_world.SetRoadTypeByPattern(city_name + 'plaza50[EW].*=O=' + city_name + 'plaza50[EW].*'.format(city_name,city_name),e3oneway)
+    empty_world.SetRoadTypeByPattern(city_name + 'plaza50[EW].*=O=' + city_name + 'plaza50[EW].*',e3oneway)
     empty_world.SetRoadTypeByPattern(city_name + 'plaza.*250[NS]=O=' + city_name + 'plaza.*250[NS]',e3oneway)
 
     # The central north/south road is four lane
@@ -193,12 +194,12 @@ def BuildCity(city_name,empty_world):
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    empty_world.AddBusinessLocationProfile(city_name + 'plaza', 40, 25,  { BusinessType.Factory : 1.0, BusinessType.Service : 0.5, BusinessType.Food : 0.25 })
-    empty_world.AddBusinessLocationProfile(city_name + 'mall',  15, 75,  { BusinessType.Factory : 0.1, BusinessType.Service : 1.0, BusinessType.Food : 1.0 })
-    empty_world.AddBusinessLocationProfile(city_name + 'civic', 20, 150, { BusinessType.School : 1.0, BusinessType.Civic : 1.0 })
+    empty_world.AddBusinessLocationProfile(city_name + 'plaza', 50, 25,  { BusinessType.Factory : 1.0, BusinessType.Service : 0.5, BusinessType.Food : 0.25 })
+    empty_world.AddBusinessLocationProfile(city_name + 'mall',  18, 75,  { BusinessType.Factory : 0.1, BusinessType.Service : 1.0, BusinessType.Food : 1.0 })
+    empty_world.AddBusinessLocationProfile(city_name + 'civic', 25, 150, { BusinessType.School : 1.0, BusinessType.Civic : 1.0 })
 
-    empty_world.AddResidentialLocationProfile(city_name + 'townhouse', 7)
-    empty_world.AddResidentialLocationProfile(city_name + 'apartment', 12)
+    empty_world.AddResidentialLocationProfile(city_name + 'townhouse', 13)
+    empty_world.AddResidentialLocationProfile(city_name + 'apartment', 27)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -206,24 +207,24 @@ def BuildCity(city_name,empty_world):
     rgenh = WorldBuilder.ResidentialGenerator(e1C, dntype, edrv, rntype, bspace = 40, spacing = 10)
 
     for ew in [-400, -300, 300, 400] :
-        for nw in range (-200, 200, 100) :
-            node1 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew, nw))]
-            node2 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew, nw + 100))]
-            empty_world.AddResidentialLocation(city_name + 'townhouse', empty_world.GenerateResidential(node1, node2, rgenv, city_name+'res'))
+        for ns in range (-200, 200, 100) :
+            node1 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew, ns))]
+            node2 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew, ns + 100))]
+            empty_world.AddResidentialLocation(city_name + 'townhouse_rp', empty_world.GenerateResidential(node1, node2, rgenv, prefix=city_name+'thouse'))
 
-    for nw in [-400, 400] :
+    for ns in [-400, 400] :
         for ew in [-300, -200, 100, 200] :
-            node1 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew, nw))]
-            node2 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew + 100, nw))]
-            empty_world.AddResidentialLocation(city_name + 'townhouse', empty_world.GenerateResidential(node1, node2, rgenv, city_name+'res'))
+            node1 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew, ns))]
+            node2 = empty_world.Nodes[ConvertNodeCoordinate(city_name + 'main', (ew + 100, ns))]
+            empty_world.AddResidentialLocation(city_name + 'townhouse_rp', empty_world.GenerateResidential(node1, node2, rgenv, prefix=city_name+'thouse'))
 
     rgenv.BothSides = False
-    empty_world.AddResidentialLocation(city_name + 'townhouse', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main300W200N'],empty_world.Nodes[city_name + 'main400W200N'], rgenv, city_name+'res'))
-    empty_world.AddResidentialLocation(city_name + 'townhouse', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main300E200N'],empty_world.Nodes[city_name + 'main400E200N'], rgenv, city_name+'res'))
+    empty_world.AddResidentialLocation(city_name + 'townhouse_rp', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main300W200N'],empty_world.Nodes[city_name + 'main400W200N'], rgenv, city_name+'res'))
+    empty_world.AddResidentialLocation(city_name + 'townhouse_rp', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main300E200N'],empty_world.Nodes[city_name + 'main400E200N'], rgenv, city_name+'res'))
 
     rgenv.DrivewayLength = - rgenv.DrivewayLength
-    empty_world.AddResidentialLocation(city_name + 'townhouse', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main400W200S'],empty_world.Nodes[city_name + 'main300W200S'], rgenv, city_name+'res'))
-    empty_world.AddResidentialLocation(city_name + 'townhouse', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main400E200S'],empty_world.Nodes[city_name + 'main300E200S'], rgenv, city_name+'res'))
+    empty_world.AddResidentialLocation(city_name + 'townhouse_rp', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main400W200S'],empty_world.Nodes[city_name + 'main300W200S'], rgenv, city_name+'res'))
+    empty_world.AddResidentialLocation(city_name + 'townhouse_rp', empty_world.GenerateResidential(empty_world.Nodes[city_name + 'main400E200S'],empty_world.Nodes[city_name + 'main300E200S'], rgenv, city_name+'res'))
 
     # some of the malls to be marked as residential apartments
     rgenplR = WorldBuilder.ResidentialGenerator(plotentry, plotnode, plotdrive, antype, driveway = -8, bspace = 5, spacing = 5, both = False)
