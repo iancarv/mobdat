@@ -125,7 +125,6 @@ def Controller(settings, pushlist) :
             i = 0
             tmpfile = '{0}_{1}'.format(loadfile,i)
             while os.path.isfile(tmpfile):
-                logger.info('saving to %s')
                 tmpfile = '{0}_{1}'.format(loadfile,i)
                 i+=1
             loadfile = tmpfile
@@ -141,8 +140,10 @@ def Controller(settings, pushlist) :
 
     for push in pushlist :
         if push == 'opensim' :
+            logger.info("building opensim")
             osb = OpenSimBuilder.OpenSimBuilder(settings, world, laysettings)
             osb.PushNetworkToOpenSim()
         elif push == 'sumo' :
+            logger.info("building sumo")
             scb = SumoBuilder.SumoBuilder(settings, world, laysettings)
             scb.PushNetworkToSumo()

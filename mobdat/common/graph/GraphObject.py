@@ -278,8 +278,17 @@ class GraphObject :
 
         result['Name'] = self.Name
         result['Decorations'] = []
+        decnames = set()
         for decoration in self.Decorations.itervalues() :
-            result['Decorations'].append(decoration.Dump())
+            if decoration.DecorationName not in decnames:
+                result['Decorations'].append(decoration.Dump())
+                decnames.add(decoration.DecorationName)
+        for decoration,colls in self.InheritedDecorations.items() :
+            for coll in colls:
+                for decoration in coll.Decorations.itervalues():
+                    if decoration.DecorationName not in decnames:
+                        result['Decorations'].append(decoration.Dump())
+                        decnames.add(decoration.DecorationName)
 
         return result
 

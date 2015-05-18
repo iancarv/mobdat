@@ -84,8 +84,6 @@ class Intersection(Node.Node) :
             x, y -- integer coordinates
         """
         Node.Node.__init__(self, name = name)
-        if not itype:
-            print "What?"
         self.AddDecoration(LayoutDecoration.CoordDecoration(x, y))
         self.AddDecoration(LayoutDecoration.EdgeMapDecoration())
         itype.AddMember(self)
