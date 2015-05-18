@@ -194,4 +194,4 @@ class SumoBuilder :
         self.CreateRoads()
         self.CreateRoadTypes()
         self.CreateRoutes()
-        # self.CreateConnections()
+        self.CreateConnections()

@@ -92,7 +92,10 @@ class Node(GraphObject) :
         member.AddToCollection(self)
 
         # add to the group the reference to the object
-        self.Members.add(member)
+        if member not in self.Members:
+            self.Members.add(member)
+        else:
+            raise
 
     # -----------------------------------------------------------------
     def DropMember(self, member) :

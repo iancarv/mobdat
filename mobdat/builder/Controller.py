@@ -57,6 +57,7 @@ global laysettings
 logger = logging.getLogger(__name__)
 world = {}
 laysettings = {}
+rewrite_worldinfo = False
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 def Controller(settings, pushlist) :
@@ -94,23 +95,6 @@ def Controller(settings, pushlist) :
         except:
             raise
 
-        # write the network information back out to the layinfo file
-        # infofile = settings["General"].get("WorldInfoFile","info.js")
-        logger.info('saving world data to %s',loadfile)
-
-        i = 0
-        tmpfile = '{0}_{1}'.format(loadfile,i)
-        while os.path.isfile(tmpfile):
-            logger.info('saving to %s')
-            tmpfile = '{0}_{1}'.format(loadfile,i)
-            i+=1
-
-        with open(loadfile, "w") as fp :
-            # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)
-            json.dump(world.Dump(), fp, ensure_ascii=True)
-
-        if partial_save and os.path.isfile(partial_save):
-            os.remove(partial_save)
 
     """
     Phase 2: World is created. Run the extension files
@@ -129,10 +113,31 @@ def Controller(settings, pushlist) :
                     logger.info("saved partial world for {0}".format(cf))
             else:
                 execfile(cf, dbbindings)
+            rewrite_worldinfo = True
             logger.info('loaded extension file %s', cf)
         except :
             logger.warn('unhandled error processing extension file %s\n%s', cf, traceback.format_exc(10))
             sys.exit(-1)
+
+    if rewrite_worldinfo:
+        # if worldinfo already exists, make another one
+        if os.path.isfile(loadfile):
+            i = 0
+            tmpfile = '{0}_{1}'.format(loadfile,i)
+            while os.path.isfile(tmpfile):
+                logger.info('saving to %s')
+                tmpfile = '{0}_{1}'.format(loadfile,i)
+                i+=1
+            loadfile = tmpfile
+
+        logger.info('saving world data to %s',loadfile)
+
+        with open(loadfile, "w") as fp :
+            # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)
+            json.dump(world.Dump(), fp, ensure_ascii=True)
+
+        if partial_save and os.path.isfile(partial_save):
+            os.remove(partial_save)
 
     for push in pushlist :
         if push == 'opensim' :

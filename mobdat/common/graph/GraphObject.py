@@ -40,6 +40,7 @@ network such as building a grid of roads.
 
 import os, sys
 import logging
+import random
 from mobdat.common.graph.Decoration import NodeTypeDecoration
 
 # we need to import python modules from the $SUMO_HOME/tools directory
@@ -85,7 +86,7 @@ class GraphObject :
         if attr in self.Decorations:
             provider = self
         elif attr in self.InheritedDecorations:
-            provider = self.InheritedDecorations[attr]
+            provider = random.sample(self.InheritedDecorations[attr],1)[0]
 
         if provider :
             return provider.Decorations[attr]
@@ -191,7 +192,9 @@ class GraphObject :
         self.Collections[collection.Name] = collection
 
         for attr in collection.Decorations.keys():
-            self.InheritedDecorations[attr] = collection
+            if attr not in self.InheritedDecorations:
+                self.InheritedDecorations[attr] = set()
+            self.InheritedDecorations[attr].add(collection)
 
         self.CollectionNodeTypes[collection.Decorations['NodeType'].Name] = collection
 
@@ -202,16 +205,17 @@ class GraphObject :
         # Clean up inherited decorations
         delnames = []
         delnodetypes = []
-        for attr,coll in self.InheritedDecorations.items():
-            if (coll.Name == collection.Name):
-                delnames.append(attr)
+        for attr,colls in self.InheritedDecorations.items():
+            for coll in colls:
+                if (coll.Name == collection.Name):
+                    delnames.append((attr,coll))
 
         for attr,coll in self.CollectionNodeTypes.items():
             if (coll.Name == collection.Name):
                 delnodetypes.append(attr)
 
-        for name in delnames:
-            del self.InheritedDecorations[name]
+        for attr,coll in delnames:
+            self.InheritedDecorations[attr].remove(coll)
         for nodetype in delnodetypes:
             del self.CollectionNodeTypes[nodetype]
 
@@ -255,7 +259,8 @@ class GraphObject :
             return self
         # inherit the decorations of all the collections the object is in
         elif attr in self.InheritedDecorations:
-            return self.InheritedDecorations[attr]
+            if len(self.InheritedDecorations[attr]) > 0:
+                return random.sample(self.InheritedDecorations[attr],1)[0]
 
         return None
 
