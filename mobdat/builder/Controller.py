@@ -56,9 +56,12 @@ global laysettings
 
 logger = logging.getLogger(__name__)
 world = {}
+laysettings = {}
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 def Controller(settings, pushlist) :
+    global world
+    global laysettings
     """
     Controller is the main entry point for driving the network building process.
 
@@ -68,24 +71,50 @@ def Controller(settings, pushlist) :
 
     laysettings = LayoutSettings.LayoutSettings(settings)
 
-    loadfile = settings["Builder"].get("LoadFile",None)
-    partial_save = settings["Builder"].get("PartialSave",None)
+    """
+    Phase 1: Load or create the world.
+    """
+    loadfile = settings["General"].get("WorldInfoFile","info.js")
+    partial_save = settings["Builder"].get("PartialSave","partial.js")
 
-    if loadfile:
+    if os.path.isfile(loadfile):
         logger.warn('Loading world info from js file. This may take a few minutes...')
-        world = WorldBuilder.WorldBuilder.LoadFromFile(loadfile)
+        try:
+            world = WorldBuilder.WorldBuilder.LoadFromFile(loadfile)
+        except:
+            logger.error("Could not load world info from file " + loadfile)
     else:
-        if partial_save:
-            try:
-                logger.warn('Loading partial world info from js file. This may take a few minutes...')
-                world = WorldBuilder.WorldBuilder.LoadFromFile(partial_save)
-            except (ValueError, IOError):
-                logger.warn('could not find partial save file, starting new world.')
-                world = WorldBuilder.WorldBuilder()
-                world.step = []
-            except:
-                raise
+        try:
+            logger.warn('Loading partial world info from js file. This may take a few minutes...')
+            world = WorldBuilder.WorldBuilder.LoadFromFile(partial_save)
+        except (ValueError, IOError):
+            logger.warn('could not find partial save file, starting new world.')
+            world = WorldBuilder.WorldBuilder()
+            world.step = []
+        except:
+            raise
 
+        # write the network information back out to the layinfo file
+        # infofile = settings["General"].get("WorldInfoFile","info.js")
+        logger.info('saving world data to %s',loadfile)
+
+        i = 0
+        tmpfile = '{0}_{1}'.format(loadfile,i)
+        while os.path.isfile(tmpfile):
+            logger.info('saving to %s')
+            tmpfile = '{0}_{1}'.format(loadfile,i)
+            i+=1
+
+        with open(loadfile, "w") as fp :
+            # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)
+            json.dump(world.Dump(), fp, ensure_ascii=True)
+
+        if partial_save and os.path.isfile(partial_save):
+            os.remove(partial_save)
+
+    """
+    Phase 2: World is created. Run the extension files
+    """
     dbbindings = {"laysettings" : laysettings, "world" : world}
 
     for cf in settings["Builder"].get("ExtensionFiles",[]) :
@@ -112,20 +141,3 @@ def Controller(settings, pushlist) :
         elif push == 'sumo' :
             scb = SumoBuilder.SumoBuilder(settings, world, laysettings)
             scb.PushNetworkToSumo()
-
-    # write the network information back out to the layinfo file
-    infofile = settings["General"].get("WorldInfoFile","info.js")
-    logger.info('saving world data to %s',infofile)
-
-    i = 0
-    while os.path.isfile(infofile):
-        tmpfile = '{0}_{1}'.format(infofile,i)
-        i+=1
-    infofile = tmpfile
-
-    with open(infofile, "w") as fp :
-        # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)
-        json.dump(world.Dump(), fp, ensure_ascii=True)
-
-    if partial_save and os.path.isfile(partial_save):
-        os.remove(partial_save)

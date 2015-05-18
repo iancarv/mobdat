@@ -198,8 +198,8 @@ def BuildCity(city_name,empty_world):
     empty_world.AddBusinessLocationProfile(city_name + 'mall',  18, 75,  { BusinessType.Factory : 0.1, BusinessType.Service : 1.0, BusinessType.Food : 1.0 })
     empty_world.AddBusinessLocationProfile(city_name + 'civic', 25, 150, { BusinessType.School : 1.0, BusinessType.Civic : 1.0 })
 
-    empty_world.AddResidentialLocationProfile(city_name + 'townhouse', 13)
-    empty_world.AddResidentialLocationProfile(city_name + 'apartment', 27)
+    empty_world.AddResidentialLocationProfile(city_name + 'townhouse_rp', 13)
+    empty_world.AddResidentialLocationProfile(city_name + 'apartment_rp', 27)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -231,16 +231,16 @@ def BuildCity(city_name,empty_world):
     rgenplL = WorldBuilder.ResidentialGenerator(plotentry, plotnode, plotdrive, antype, driveway = 8, bspace = 5, spacing = 5, both = False)
 
     for n in ['main200W200S', 'main100E200S', 'main200E200S', 'main300W200N', 'main200W200N', 'main100E200N'] :
-        empty_world.AddResidentialLocation(city_name + 'apartment', empty_world.BuildSimpleParkingLotEW(empty_world.Nodes[city_name + n], pntype, rgenplR, city_name + 'apartment', offset=-15, slength=40, elength=60))
-        empty_world.AddResidentialLocation(city_name + 'apartment', empty_world.BuildSimpleParkingLotEW(empty_world.Nodes[city_name + n], pntype, rgenplL, city_name + 'apartment', offset=15, slength=40, elength=60))
+        empty_world.AddResidentialLocation(city_name + 'apartment_rp', empty_world.BuildSimpleParkingLotEW(empty_world.Nodes[city_name + n], pntype, rgenplR, city_name + 'apartment', offset=-15, slength=40, elength=60))
+        empty_world.AddResidentialLocation(city_name + 'apartment_rp', empty_world.BuildSimpleParkingLotEW(empty_world.Nodes[city_name + n], pntype, rgenplL, city_name + 'apartment', offset=15, slength=40, elength=60))
 
     for n in ['main200W200S', 'main200W100S', 'main200W200N', 'main200W100N'] :
-        empty_world.AddResidentialLocation(city_name + 'apartment', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplR, city_name + 'apartment', offset=-30))
-        empty_world.AddResidentialLocation(city_name + 'apartment', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplL, city_name + 'apartment', offset=30))
+        empty_world.AddResidentialLocation(city_name + 'apartment_rp', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplR, city_name + 'apartment', offset=-30))
+        empty_world.AddResidentialLocation(city_name + 'apartment_rp', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplL, city_name + 'apartment', offset=30))
 
     for n in ['main200E100S', 'main200E0N', 'main200E100N'] :
-        empty_world.AddResidentialLocation(city_name + 'apartment', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplR, city_name + 'apartment', offset=-30))
-        empty_world.AddResidentialLocation(city_name + 'apartment', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplL, city_name + 'apartment', offset=30))
+        empty_world.AddResidentialLocation(city_name + 'apartment_rp', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplR, city_name + 'apartment', offset=-30))
+        empty_world.AddResidentialLocation(city_name + 'apartment_rp', empty_world.BuildSimpleParkingLotNS(empty_world.Nodes[city_name + n], pntype, rgenplL, city_name + 'apartment', offset=30))
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # BUILD THE BUSINESS NEIGHBORHOODS
