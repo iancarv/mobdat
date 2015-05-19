@@ -249,7 +249,7 @@ class OpenSimBuilder :
             if rot >= 0 :
                 self.NodeMap[name] = itype
 
-                (p1x,p1y),sim = CalculateOSCoordinates(node.X + self.BuildOffsetX, node.Y + self.BuildOffsetY, self)
+                (p1x,p1y),sim = CalculateOSCoordinates(node.Coord.X + self.BuildOffsetX, node.Coord.Y + self.BuildOffsetY, self)
                 p1z = itype.ZOffset
                 asset = itype.AssetID
                 if type(asset) == dict :

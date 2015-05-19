@@ -343,13 +343,13 @@ class CapsuleDecoration(Decoration) :
     # -----------------------------------------------------------------
     @property
     def SourceName(self) :
-        node = random.choice(self.HostObject.Members)
+        node = random.sample(self.HostObject.Members,1)[0]
         return node.EndPoint.SourceName
 
     # -----------------------------------------------------------------
     @property
     def DestinationName(self) :
-        node = random.choice(self.HostObject.Members)
+        node = random.sample(self.HostObject.Members,1)[0]
         return node.EndPoint.DestinationName
 
 

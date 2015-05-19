@@ -99,14 +99,17 @@ class GraphObject :
         # Next look for an edge with the right name, if there
         # are multiple then take the first one found
         if attr in self.OutputEdgesNodeTypes:
-            return self.OutputEdgesNodeTypes[attr]
+            return random.sample(self.OutputEdgesNodeTypes[attr],1)[0]
 
         # If nothing else works, lets try outside of the cache: maybe some new
         # collection was added
         if not attr.startswith('__'):
             provider = self._LastResortSearch(attr)
             if provider:
-                return provider.Decorations[attr]
+                try:
+                    return provider.Decorations[attr]
+                except:
+                    return provider
 
         nodetype = self.__class__.__name__
         if 'NodeType' in self.Decorations :
@@ -185,7 +188,10 @@ class GraphObject :
     # -----------------------------------------------------------------
     def AddOutputEdge(self, edge) :
         self.OutputEdges.append(edge)
-        self.OutputEdgesNodeTypes[edge.Decorations['NodeType'].Name] = edge
+        name = edge.Decorations['NodeType'].Name
+        if name not in self.OutputEdgesNodeTypes:
+            self.OutputEdgesNodeTypes[name] = []
+        self.OutputEdgesNodeTypes[name].append(edge.EndNode)
 
     # -----------------------------------------------------------------
     def AddToCollection(self, collection) :
@@ -229,6 +235,9 @@ class GraphObject :
         # Parse through inherited decorations
         for coll in self.Collections.itervalues() :
             if attr in coll.Decorations :
+                if attr not in self.InheritedDecorations:
+                    self.InheritedDecorations = []
+                self.InheritedDecorations[attr].append(coll)
                 return coll
 
         # Check to see if the attribute is the name of a collection in which
@@ -241,6 +250,9 @@ class GraphObject :
         # are multiple then take the first one found
         for edge in self.OutputEdges :
             if edge.Decorations['NodeType'].Name == attr :
+                if attr not in self.OutputEdgesNodeTypes:
+                    self.OutputEdgesNodeTypes[attr] = []
+                self.OutputEdgesNodeTypes[attr].append(edge.EndNode)
                 return edge.EndNode
 
         return None
