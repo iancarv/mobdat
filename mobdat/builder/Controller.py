@@ -57,7 +57,7 @@ global laysettings
 logger = logging.getLogger(__name__)
 world = {}
 laysettings = {}
-rewrite_worldinfo = False
+
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 def Controller(settings, pushlist) :
@@ -69,7 +69,7 @@ def Controller(settings, pushlist) :
     Arguments:
     settings -- nested dictionary with variables for configuring the connectors
     """
-
+    rewrite_worldinfo = False
     laysettings = LayoutSettings.LayoutSettings(settings)
 
     """
