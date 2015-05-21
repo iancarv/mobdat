@@ -62,7 +62,7 @@ def AuthByUserName(settings) :
         avname = sim["AvatarName"] if "AvatarName" in sim else \
             exit('No avatar name specified to login in Scene {0}'.format(sname))
         domains = sim["Domain"] if "Domain" in sim else ['Dispatcher', 'RemoteControl']
-        lifespan = sim["LifeSpan"] if "LifeSpan" in sim else 3600
+        lifespan = sim["LifeSpan"] if "LifeSpan" in sim else 3600000
         passwd = sim["Password"] if "Password" in sim else None
 
         if not passwd :

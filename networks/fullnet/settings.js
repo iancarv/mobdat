@@ -4,16 +4,15 @@
         "TimeSteps" : 0,
         "Interval" : 0.200,
         "SecondsPerStep" : 2.0,
-        "StartTimeOfDay" : 3.0,
-        "MaximumTravelers" : 0, 
-		"WorldInfoFile" : "../data/worldinfo.js",
+        "StartTimeOfDay" : 7.0,
+        "MaximumTravelers" : 6000, 
+	"WorldInfoFile" : "worldinfo.js",
         "Connectors" : ["opensim", "sumo", "social", "stats"]
     },
 
     "Builder" :
     {
-        "ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"],
-        "PartialSave" : "/Users/arthurvaladares/Copy/MacWorkspace/data/partial.js"
+        "ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
     },
 
     "SocialConnector" :
@@ -28,7 +27,7 @@
         "WorldSize" : [1910.0, 1910.0, 100.0],
         "RegionSize" : [1024.0, 1024.0],
         "BuildOffset" : [415.0, 415.0],
-        "WorldOffset" : [10.0, 10.0, 26.0],
+        "WorldOffset" : [10.0, 10.0, 25.5],
         "Scale" : 0.4,
         "PositionDelta" : 0.1,
         "VelocityDelta" : 0.1,
