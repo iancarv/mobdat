@@ -70,7 +70,7 @@ class ShutdownEvent :
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-class StatsEvent :
+class StatsEvent(object) :
     # -----------------------------------------------------------------
     def __init__(self, timestep, skey = None) :
         self.StatKey = self.__class__.__name__ if not skey else skey
@@ -138,7 +138,7 @@ class OpenSimConnectorStatsEvent(StatsEvent) :
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-class TimerEvent :
+class TimerEvent(object) :
     # -----------------------------------------------------------------
     def __init__(self, currentStep, currentTime) :
         self.CurrentStep = currentStep
@@ -156,7 +156,7 @@ class TimerEvent :
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-class ObjectEvent :
+class ObjectEvent(object):
     # -----------------------------------------------------------------
     def __init__(self, identity) :
         self.ObjectIdentity = identity
@@ -275,6 +275,7 @@ class EventTrafficLightStateChange(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
+	
         pstring = super(EventTrafficLightStateChange,self).__str__()
-        fstring = "{0},state:{2}"
+        fstring = "{0},state:{1}"
         return fstring.format(pstring,self.StopLightState)

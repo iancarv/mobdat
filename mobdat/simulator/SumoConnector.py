@@ -40,7 +40,7 @@ and operations into and out of the sumo traffic simulator.
 import os, sys
 import logging
 import subprocess
-
+import time
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
@@ -53,9 +53,137 @@ import traci.constants as tc
 import BaseConnector, EventHandler, EventTypes
 from mobdat.common import ValueTypes
 
+import multiprocessing
 import math
+from multiprocessing import Manager, Process, Pool,Queue
+import asyncore
+import asynchat
+import socket
+import threading
+import json
 
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+from threading import Thread
+import time
+import random
+
+
+#from threading import Thread
+
+#Sumo Connector is responsible to make the link between Sumo and the federate 
+
+# This block represents the Chat function , all classes below until the ##### line has the function to make the connection to the Federate. The conection is bidirecinal.
+#Since the implametation use a chat room, multiple instaces could be connected to the same socket and it would be able to communicate
+#the application now just send the same information to all the applications that are connecte 
+#To send information to the sumo federate Sumo connector has a Function Self.Send(element) that put in a queue the element that will be send by the Connection class 
+
+
+
+# List of all instances that are connected 
+chat_room = {}
+
+
+
+
+class ChatHandler(asynchat.async_chat):
+    def __init__(self, sock):
+        asynchat.async_chat.__init__(self, sock=sock, map=chat_room)
+
+        self.set_terminator('\n')
+        self.buffer = []
+
+    def collect_incoming_data(self, data):
+        self.buffer.append(data)
+
+    def found_terminator(self):
+        msg = ''.join(self.buffer)
+        print 'Received:', msg
+        #for handler in chat_room.itervalues():
+            #if hasattr(handler, 'push'):
+                #handler.push(msg + '\n')
+        self.buffer = []
+
+class ChatServer(asyncore.dispatcher):
+    def __init__(self, host, port):
+        asyncore.dispatcher.__init__(self, map=chat_room)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.bind((host, port))
+        self.listen(5)
+
+    def handle_accept(self):
+        pair = self.accept()
+        if pair is not None:
+            sock, addr = pair
+            print 'Incoming connection from %s' % repr(addr)
+            handler = ChatHandler(sock)
+
+class ChatClient(asynchat.async_chat):
+
+     def __init__(self, host, port):
+       asynchat.async_chat.__init__(self)
+       self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+       self.connect((host, port))
+
+       self.set_terminator('\n')
+       self.buffer = []
+
+     def collect_incoming_data(self, data):
+        self.buffer.append(data)
+
+     def found_terminator(self):
+        msg = ''.join(self.buffer)
+        print 'Received:', msg
+        self.buffer = []
+
+
+ 
+
+
+# the class connection hold the socket name and its interace 
+# the connector class is the consumer of all information created by the connector, that means that it will be responsible to send the information created from the connector to the federate
+#it has a queue that will store the messages untill its avalible to send it 
+#it has 2 threadsm one to listen from the socket and another to send throw the socket
+#a iinstance of connection has to be crated in the connector class
+
+class Connection:
+	#receive a queue created by summo connector
+        def __init__(self,queue):
+			
+                self.q = queue
+		#create the socket connection
+                self.server = ChatClient('localhost', 23456)
+		#create a thread to listen the socket
+                self.comm =   threading.Thread(target=asyncore.loop)
+                self.comm.daemon = True
+                self.comm.start()
+                #create a socket to send the information to the federate
+		self.thread = Process(target = self.Send_Inv , args = (self.q,))
+                self.thread.start()
+                asyncore.loop(map=chat_room)
+
+	#the clas is hesponsible to push and pop to the queue
+        def PushQueue(self,element):
+                self.q.put(element)
+	def PopQueue(self):
+                return self.q.get()
+
+	#responsible to send the information throw the socket
+	#receive dictionaries from the connector and tranforme it in a json object
+	#adding at the and a terminator to be processed in the federate
+	#send to all connected applications
+        def Send_Inv(self,q):
+        	while True:
+           		num = q.get()
+           		print "Consumed", num
+           		time.sleep(1)
+
+                        encoded_file = json.dumps(num)
+                        encoded_file = encoded_file +"\r\n\r\n"
+                        self.server.push(encoded_file )
+                        for handler in chat_room.itervalues():
+                                 if hasattr(handler, 'push'):
+                                         handler.push(encoded_file)
+
+                        
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
 
@@ -77,15 +205,23 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
 
         self.DumpCount = 50
         self.EdgesPerIteration = 25
+	
+	
 
         self.VelocityFudgeFactor = settings["SumoConnector"].get("VelocityFudgeFactor",0.90)
 
         self.AverageClockSkew = 0.0
         # self.LastStepTime = 0.0
 
+	queue = multiprocessing.Queue()
+	self.connect = Connection(queue)
         # for cf in settings["SumoConnector"].get("ExtensionFiles",[]) :
         #     execfile(cf,{"EventHandler" : self})
 
+
+    # To send the information just push to the queue and the thread will send to the Federate 
+    def Send(self,event):
+	self.connect.PushQueue(event)
     # -----------------------------------------------------------------
     # -----------------------------------------------------------------
     def __NormalizeCoordinate(self,pos) :
@@ -139,6 +275,7 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
     #     return traci.trafficlights.setRedYellowGreenState(identity, state)
 
     # -----------------------------------------------------------------
+    
     def HandleTrafficLights(self, currentStep) :
         changelist = traci.trafficlights.getSubscriptionResults()
         for tl, info in changelist.iteritems() :
@@ -146,6 +283,14 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             if state != self.TrafficLights[tl] :
                 self.TrafficLights[tl] = state
                 event = EventTypes.EventTrafficLightStateChange(tl,state)
+		
+	        stateStr = state.__str__()
+	        tlStr = tl.__str__()
+		#create a dictionary with all necessary information to send to the socket
+		json_dict = {'evt_type':'TrafficLightInstance','status':stateStr,'id':tlStr}
+		#Send to the socket
+		self.Send(json_dict)
+
                 self.PublishEvent(event)
 
     # -----------------------------------------------------------------
@@ -155,7 +300,14 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             count = info[tc.LAST_STEP_VEHICLE_NUMBER]
             if count > 0 :
                 event = EventTypes.EventInductionLoop(il,count)
-                self.PublishEvent(event)
+	        
+		print il
+		countStr = count.__str__()
+		ilStr = il.__str__()
+		#create a dictionary with all necessary information to send to the socket
+		jason_dict = {'evt_type':'InductionLoop','count':countStr,'id':ilStr}	
+		#self.Send(jason_dict)
+		self.PublishEvent(event)
 
     # -----------------------------------------------------------------
     def HandleDepartedVehicles(self, currentStep) :
@@ -166,15 +318,31 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             vtype = traci.vehicle.getTypeID(v)
             pos = self.__NormalizeCoordinate(traci.vehicle.getPosition(v))
             event = EventTypes.EventCreateObject(v, vtype, pos)
-            self.PublishEvent(event)
+	    posVet = pos.ToList()
+	    vid = v.__str__().split("_")[0]
+	    vid = vid[6:]
+	    vid = int(vid)
+	    vtype = vtype.__str__().split("l")[1][1:]
+		#create a dictionary with all necessary information to send to the socket
+	    json_dict = {'evt_type':'VehicleInstance','position':posVet,'id':vid,'vtype':vtype}
+	    #self.Send(json_dict)
+            
+	    self.PublishEvent(event)
 
     # -----------------------------------------------------------------
     def HandleArrivedVehicles(self, currentStep) :
         alist = traci.simulation.getArrivedIDList()
         for v in alist :
             event = EventTypes.EventDeleteObject(v)
-            self.PublishEvent(event)
+	    
+	    vid = v.__str__().split("_")[0]
+	    vid = vid[6:]
+	    vid = int(vid)
+	    #create a dictionary with all necessary information to send to the socket
+	    json_dict = {'evt_type':'DeleteObject','id':vid}
+	    #self.Send(json_dict)	
 
+            self.PublishEvent(event)
     # -----------------------------------------------------------------
     def HandleVehicleUpdates(self, currentStep) :
         changelist = traci.vehicle.getSubscriptionResults()
@@ -183,8 +351,19 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             ang = self.__NormalizeAngle(info[tc.VAR_ANGLE])
             vel = self.__NormalizeVelocity(info[tc.VAR_SPEED], info[tc.VAR_ANGLE])
             event = EventTypes.EventObjectDynamics(v, pos, ang, vel)
-            self.PublishEvent(event)
 
+	    posVet = pos.ToList()
+	    #posVet = posVet[:3]
+	    vid = v.__str__().split("_")[0]
+	    vid = vid[6:]
+            vid = int(vid)
+	    ang_vet = ang.ToList()
+	    vel_vet = vel.ToList()
+	    #create a dictionary with all necessary information to send to the socket
+	    json_dict = {'evt_type':"VehicleInstance",'position':posVet,'id':vid}#,'angle':ang_vet,'velocity':vel_vet}
+	    self.Send(json_dict)	
+
+            self.PublishEvent(event)
     # -----------------------------------------------------------------
     # def HandleRerouteVehicle(self, event) :
     #     traci.vehicle.rerouteTraveltime(str(event.ObjectIdentity))
