@@ -49,8 +49,8 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from Node import Node
-from Edge import Edge
+from mobdat.common.graph.Node import Node
+from mobdat.common.graph.Edge import Edge
 import json
 
 logger = logging.getLogger(__name__)

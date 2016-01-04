@@ -41,6 +41,8 @@ clock ticks.
 
 import os, sys
 import logging
+from cadis.frame import Frame
+from cadis.store.simplestore import SimpleStore
 
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
@@ -211,10 +213,12 @@ def Controller(settings) :
     """
 
     laysettings = LayoutSettings.LayoutSettings(settings)
+    #laysettings = None
     # load the world
     infofile = settings["General"].get("WorldInfoFile","info.js")
     logger.info('loading world data from %s',infofile)
     world = WorldInfo.WorldInfo.LoadFromFile(infofile)
+    #world = None
 
     cnames = settings["General"].get("Connectors",['sumo', 'opensim', 'social', 'stats'])
     #if 'opensim' in cnames:
@@ -222,37 +226,41 @@ def Controller(settings) :
     #    for sname in settings["OpenSimConnector"]["Scenes"].keys():
     #        _SimulationControllers['osc:'+sname] = OpenSimConnector.OpenSimConnector
     #        cnames.append('osc:'+sname)
-    evrouter = EventRouter.EventRouter()
+    # evrouter = EventRouter.EventRouter()
     # initialize the connectors first
     connectors = []
+    store = SimpleStore()
     for cname in cnames :
         if cname not in _SimulationControllers :
             logger.warn('skipping unknown simulation connector; %s' % (cname))
             continue
 
-        connector = _SimulationControllers[cname](evrouter, settings, world, laysettings, cname)
-        connproc = Process(target=connector.SimulationStart, args=())
-        connproc.start()
-        connectors.append(connproc)
+        cframe = Frame(store)
+        connector = _SimulationControllers[cname](settings, world, laysettings, cname, cframe)
+        cframe.attach(connector)
+        #connproc = Process(target=connector.SimulationStart, args=())
+        #connproc.start()
+        connectors.append(cframe)
+        cframe.go()
             
-    evrouterproc = Process(target=evrouter.RouteEvents, args=())
-    evrouterproc.start()
+    #evrouterproc = Process(target=evrouter.RouteEvents, args=())
+    #evrouterproc.start()
 
     # start the timer thread
-    thread = TimerThread(evrouter, settings)
-    thread.start()
+    #thread = TimerThread(evrouter, settings)
+    #thread.start()
 
-    controller = MobdatController(evrouter, logger)
-    controller.cmdloop()
+    #controller = MobdatController(evrouter, logger)
+    #controller.cmdloop()
 
-    thread.join()
+    #thread.join()
 
     # send the shutdown event to the connectors
     for connproc in connectors :
         connproc.join()
 
     # and send the shutdown event to the router
-    event = EventTypes.ShutdownEvent(True)
-    evrouter.RouterQueue.put(event)
+    #event = EventTypes.ShutdownEvent(True)
+    #evrouter.RouterQueue.put(event)
 
-    evrouterproc.join()
+    #evrouterproc.join()

@@ -142,7 +142,7 @@ def SetupLoggers() :
     logger.addHandler(flog)
 
     clog = logging.StreamHandler()
-    clog.addFilter(logging.Filter(name='mobdat'))
+    #clog.addFilter(logging.Filter(name='mobdat'))
     clog.setFormatter(logging.Formatter('[%(name)s] %(message)s'))
     clog.setLevel(logging.WARN)
     logger.addHandler(clog)

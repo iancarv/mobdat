@@ -5,9 +5,9 @@
         "Interval" : 0.200,
         "SecondsPerStep" : 2.0,
         "StartTimeOfDay" : 7.0,
-        "MaximumTravelers" : 6000, 
-	"WorldInfoFile" : "worldinfo.js",
-        "Connectors" : ["opensim", "sumo", "social", "stats"]
+        "MaximumTravelers" : 2000,
+		"WorldInfoFile" : "worldinfo.js",
+        "Connectors" : ["sumo", "social", "opensim"]
     },
 
     "Builder" :
@@ -33,6 +33,7 @@
         "VelocityDelta" : 0.1,
         "AccelerationDelta" : 0.05,
         "UpdateThreadCount" : 6,
+        "Interval" : 0.2,
         "Binary" : true,
 	"Scenes" :
 	{
