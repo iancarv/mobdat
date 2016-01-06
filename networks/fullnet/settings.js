@@ -4,37 +4,72 @@
         "TimeSteps" : 0,
         "Interval" : 0.200,
         "SecondsPerStep" : 2.0,
-        "StartTimeOfDay" : 3.0,
-        "MaximumTravelers" : 0, 
-	"WorldInfoFile" : "networks/fullnet/data/worldinfo.js",
-        "Connectors" : ["opensim", "sumo", "social", "stats"]
+        "StartTimeOfDay" : 7.0,
+        "MaximumTravelers" : 2000,
+		"WorldInfoFile" : "worldinfo.js",
+        "Connectors" : ["sumo", "social", "opensim"]
     },
 
     "Builder" :
     {
-	"ExtensionFiles" : ["networks/fullnet/layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
+        "ExtensionFiles" : ["networks/fullnet/dist_layout.py", "networks/fullnet/business.py", "networks/fullnet/people.py"]
     },
 
     "SocialConnector" :
     {
         "WaitMean" : 1000.0,
         "WaitSigma" : 200.0,
-        "PeopleCount" : 1200
+        "PeopleCount" : 120
     },
 
     "OpenSimConnector" :
     {
-        "WorldSize" : [810.0, 810.0, 100.0],
-        "WorldOffset" : [363.0, 363.0, 25.50],
-        "WorldCenter" : [768.0, 768.0, 25.50],
+        "WorldSize" : [1910.0, 1910.0, 100.0],
+        "RegionSize" : [1024.0, 1024.0],
+        "BuildOffset" : [415.0, 415.0],
+        "WorldOffset" : [10.0, 10.0, 25.5],
         "Scale" : 0.4,
         "PositionDelta" : 0.1,
         "VelocityDelta" : 0.1,
         "AccelerationDelta" : 0.05,
-        "EndPoint" : "http://127.0.0.1:7060/Dispatcher/",
-        "Scene" : "Fullnet",
         "UpdateThreadCount" : 6,
-        "Binary" : true
+        "Interval" : 0.2,
+        "Binary" : true,
+	"Scenes" :
+	{
+		"City00" :
+		{
+			"Name" : "City00",
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://parana.mdg.lab:9000/Dispatcher/",
+			"Location" : [0,0]
+		},
+		"City01" :
+		{
+			"Name" : "City01",
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://ganges.mdg.lab:9000/Dispatcher/",
+			"Location" : [0,1]
+		},
+		"City10" :
+		{
+			"Name" : "City10",
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://rhine.mdg.lab:9000/Dispatcher/",
+			"Location" : [1,0]
+		},
+		"City11" :
+		{
+			"Name" : "City11",
+			"AvatarName" : "Test User",
+			"Password" : "test",
+			"EndPoint" : "http://hudson.mdg.lab:9000/Dispatcher/",
+			"Location" : [1,1]
+		}
+	}
     },
     
     "SumoConnector" :
@@ -80,5 +115,34 @@
 	    "Signature" : ["*/*", "*/*", "*/*", "*/*"],
             "IntersectionTypes" : [ "driveway_node", "parking_drive_intersection", "apartment", "business", "townhouse", "stoplight", "priority" ]
 	}
+    ],
+
+    "Cities" :
+    [
+        {
+            "Name" : "City00",
+            "Offset" : [0,0]
+        },
+
+        {
+            "Name" : "City11",
+            "Offset" : [1100,1100]
+        },
+	{
+	    "Name" : "City10",
+	    "Offset" : [1100,0]
+	},
+	{
+	    "Name" : "City01",
+	    "Offset" : [0,1100]
+	}
+    ],
+
+    "CityConnections" :
+    [
+	["City00:main200W400N","City01:main200W400S"],
+	["City00:main400E100N","City10:main400W100N"],
+	["City01:main400E100N","City11:main400W100N"],
+	["City10:main200W400N","City11:main200W400S"]
     ]
 }

@@ -7,15 +7,15 @@ modification, are permitted provided that the following conditions are
 met:
 
 * Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer. 
+  this list of conditions and the following disclaimer.
 
 * Redistributions in binary form must reproduce the above copyright
   notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution. 
+  documentation and/or other materials provided with the distribution.
 
 * Neither the name of Intel Corporation nor the names of its
   contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission. 
+  this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -27,7 +27,7 @@ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
 PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @file    SumoConnector.py
 @author  Mic Bowman
@@ -37,37 +37,46 @@ This file defines the SumoConnector class that translates mobdat events
 and operations into and out of the sumo traffic simulator.
 
 """
-import os, sys
 import logging
-import subprocess, threading, string, time
+import math
+import os, sys
+import platform
+import subprocess
+from sumolib import checkBinary
+import traci
+
+import BaseConnector, EventHandler, EventTypes
+from cadis.common import IFramed
+from cadis.common.IFramed import GetterSetter, Producer
+from cadis.language.schema import CADIS
+from mobdat.common import ValueTypes
+from mobdat.simulator.DataModel import Vehicle
+import traci.constants as tc
+
 
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from sumolib import checkBinary
 
-import traci
-import traci.constants as tc
-import BaseConnector, EventRouter, EventHandler, EventTypes
-from mobdat.common import ValueTypes
 
-import math
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
+@Producer(Vehicle)
+@GetterSetter(Vehicle)
+class SumoConnector(BaseConnector.BaseConnector, IFramed.IFramed) :
 
     # -----------------------------------------------------------------
-    def __init__(self, evrouter, settings, world, netsettings) :
-        EventHandler.EventHandler.__init__(self, evrouter)
+    def __init__(self, settings, world, netsettings, cname, frame) :
         BaseConnector.BaseConnector.__init__(self, settings, world, netsettings)
-
+        self.cars = {}
         self.__Logger = logging.getLogger(__name__)
+        self.frame = frame
 
         # the sumo time scale is 1sec per iteration so we need to scale
-        # to the 100ms target for our iteration time, this probably 
+        # to the 100ms target for our iteration time, this probably
         # should be computed based on the target step size
         self.TimeScale = 1.0 / self.Interval
 
@@ -85,6 +94,7 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
 
         # for cf in settings["SumoConnector"].get("ExtensionFiles",[]) :
         #     execfile(cf,{"EventHandler" : self})
+
 
     # -----------------------------------------------------------------
     # -----------------------------------------------------------------
@@ -123,7 +133,7 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         count = 0
         while self.CurrentEdgeList and count < self.EdgesPerIteration :
             edge = self.CurrentEdgeList.pop()
-            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge)) 
+            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge))
             count += 1
 
     # # -----------------------------------------------------------------
@@ -139,118 +149,129 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
     #     return traci.trafficlights.setRedYellowGreenState(identity, state)
 
     # -----------------------------------------------------------------
-    def HandleTrafficLights(self, currentStep) :
-        changelist = traci.trafficlights.getSubscriptionResults()
-        for tl, info in changelist.iteritems() :
-            state = info[tc.TL_RED_YELLOW_GREEN_STATE]
-            if state != self.TrafficLights[tl] :
-                self.TrafficLights[tl] = state
-                event = EventTypes.EventTrafficLightStateChange(tl,state)
-                self.PublishEvent(event)
+    def HandleTrafficLights(self) :
+        pass
+        #changelist = traci.trafficlights.getSubscriptionResults()
+        #for tl, info in changelist.iteritems() :
+        #    state = info[tc.TL_RED_YELLOW_GREEN_STATE]
+        #    if state != self.TrafficLights[tl] :
+        #        self.TrafficLights[tl] = state
+        #        event = EventTypes.EventTrafficLightStateChange(tl,state)
+        #        self.PublishEvent(event)
 
     # -----------------------------------------------------------------
-    def HandleInductionLoops(self, currentStep) :
-        changelist = traci.inductionloop.getSubscriptionResults()
-        for il, info in changelist.iteritems() :
-            count = info[tc.LAST_STEP_VEHICLE_NUMBER]
-            if count > 0 :
-                event = EventTypes.EventInductionLoop(il,count)
-                self.PublishEvent(event)
+    def HandleInductionLoops(self) :
+        pass
+        #changelist = traci.inductionloop.getSubscriptionResults()
+        #for il, info in changelist.iteritems() :
+        #    count = info[tc.LAST_STEP_VEHICLE_NUMBER]
+        #    if count > 0 :
+        #        event = EventTypes.EventInductionLoop(il,count)
+        #        self.PublishEvent(event)
 
     # -----------------------------------------------------------------
-    def HandleDepartedVehicles(self, currentStep) :
+    def HandleDepartedVehicles(self) :
         dlist = traci.simulation.getDepartedIDList()
         for v in dlist :
             traci.vehicle.subscribe(v,[tc.VAR_POSITION, tc.VAR_SPEED, tc.VAR_ANGLE])
 
             vtype = traci.vehicle.getTypeID(v)
-            event = EventTypes.EventCreateObject(v, vtype)
-            self.PublishEvent(event)
+            pos = self.__NormalizeCoordinate(traci.vehicle.getPosition(v))
+
+            car = self.cars[v]
+            car.Position = pos
+            car.Type = vtype
+
+            #event = EventTypes.EventCreateObject(v, vtype, pos)
+            #self.PublishEvent(event)
 
     # -----------------------------------------------------------------
-    def HandleArrivedVehicles(self, currentStep) :
+    def HandleArrivedVehicles(self) :
         alist = traci.simulation.getArrivedIDList()
         for v in alist :
-            event = EventTypes.EventDeleteObject(v)
-            self.PublishEvent(event)
+            #event = EventTypes.EventDeleteObject(v)
+            #self.PublishEvent(event)
+            self.frame.delete(self.cars[v].__class__, self.cars[v].ID)
+            del self.cars[v]
 
     # -----------------------------------------------------------------
-    def HandleVehicleUpdates(self, currentStep) :
+    def HandleVehicleUpdates(self) :
         changelist = traci.vehicle.getSubscriptionResults()
         for v, info in changelist.iteritems() :
-            pos = self.__NormalizeCoordinate(info[tc.VAR_POSITION])
-            ang = self.__NormalizeAngle(info[tc.VAR_ANGLE])
-            vel = self.__NormalizeVelocity(info[tc.VAR_SPEED], info[tc.VAR_ANGLE])
-            event = EventTypes.EventObjectDynamics(v, pos, ang, vel)
-            self.PublishEvent(event)
+            car = self.frame.get(Vehicle, self.cars[v].ID)
+            car.Position = self.__NormalizeCoordinate(info[tc.VAR_POSITION])
+            car.Rotation = self.__NormalizeAngle(info[tc.VAR_ANGLE])
+            car.Velocity = self.__NormalizeVelocity(info[tc.VAR_SPEED], info[tc.VAR_ANGLE])
+            #self.__Logger.info("Vehicle %s at %s", car.Name, car.Position)
+            #event = EventTypes.EventObjectDynamics(v, pos, ang, vel)
+            #self.PublishEvent(event)
 
     # -----------------------------------------------------------------
     # def HandleRerouteVehicle(self, event) :
     #     traci.vehicle.rerouteTraveltime(str(event.ObjectIdentity))
- 
+
     # -----------------------------------------------------------------
-    def HandleAddVehicleEvent(self, event) :
-        self.__Logger.debug('add vehicle %s going from %s to %s', event.ObjectIdentity, event.Route, event.Target)
-        traci.vehicle.add(event.ObjectIdentity, event.Route, typeID=event.ObjectType)
-        traci.vehicle.changeTarget(event.ObjectIdentity, event.Target)
+    def NewVehicles(self):
+        added = self.frame.new(Vehicle)
+        #self.__Logger.debug("Tick SUMO: New vehicles %s", added)
+        for car in added:
+            self.__Logger.debug('add vehicle %s going from %s to %s', car.Name, car.Route, car.Target)
+            traci.vehicle.add(car.Name, car.Route, typeID=car.Type)
+            traci.vehicle.changeTarget(car.Name, car.Target)
+            self.cars[car.Name] = car
 
     # -----------------------------------------------------------------
     # Returns True if the simulation can continue
-    def HandleTimerEvent(self, event) :
-        self.CurrentStep = event.CurrentStep
-        self.CurrentTime = event.CurrentTime
+    def update(self):
+        self.CurrentStep += 1
+        self.CurrentTime = self.Clock()
 
         # Compute the clock skew
         self.AverageClockSkew = (9.0 * self.AverageClockSkew + (self.Clock() - self.CurrentTime)) / 10.0
 
-        # handle the time scale computation based on the inter-interval
-        # times
-        # if self.LastStepTime > 0 :
-        #     delta = ctime - self.LastStepTime
-        #     if delta > 0 :
-        #         self.TimeScale = (9.0 * self.TimeScale + 1.0 / delta) / 10.0
-        # self.LastStepTime = ctime
-
         try :
+
+            self.NewVehicles()
             traci.simulationStep()
 
-            self.HandleInductionLoops(self.CurrentStep)
-            self.HandleTrafficLights(self.CurrentStep)
-            self.HandleDepartedVehicles(self.CurrentStep)
-            self.HandleVehicleUpdates(self.CurrentStep)
-            self.HandleArrivedVehicles(self.CurrentStep)
-        except TypeError as detail: 
-            self.__Logger.error("[sumoconector] simulation step failed with type error %s" % (str(detail)))
+            self.HandleInductionLoops()
+            self.HandleTrafficLights()
+            self.HandleDepartedVehicles()
+            self.HandleVehicleUpdates()
+            self.HandleArrivedVehicles()
+        except TypeError as detail:
+            self.__Logger.exception("[sumoconector] simulation step failed with type error %s" % (str(detail)))
             sys.exit(-1)
-        except ValueError as detail: 
-            self.__Logger.error("[sumoconector] simulation step failed with value error %s" % (str(detail)))
+        except ValueError as detail:
+            self.__Logger.exception("[sumoconector] simulation step failed with value error %s" % (str(detail)))
             sys.exit(-1)
-        except NameError as detail: 
-            self.__Logger.error("[sumoconector] simulation step failed with name error %s" % (str(detail)))
+        except NameError as detail:
+            self.__Logger.exception("[sumoconector] simulation step failed with name error %s" % (str(detail)))
             sys.exit(-1)
-        except AttributeError as detail: 
-            self.__Logger.error("[sumoconnector] simulation step failed with attribute error %s" % (str(detail)))
+        except AttributeError as detail:
+            self.__Logger.exception("[sumoconnector] simulation step failed with attribute error %s" % (str(detail)))
             sys.exit(-1)
         except :
-            self.__Logger.error("[sumoconnector] error occured in simulation step; %s" % (sys.exc_info()[0]))
+            self.__Logger.exception("[sumoconnector] error occured in simulation step; %s" % (sys.exc_info()[0]))
             sys.exit(-1)
 
         self._RecomputeRoutes()
 
-        if (event.CurrentStep % self.DumpCount) == 0 :
-            count = traci.vehicle.getIDCount()
-            event = EventTypes.SumoConnectorStatsEvent(self.CurrentStep, self.AverageClockSkew, count)
-            self.PublishEvent(event)
+        #TODO: Reimplement stats connector
+        #if (self.CurrentStep % self.DumpCount) == 0 :
+            #count = traci.vehicle.getIDCount()
+            #event = EventTypes.SumoConnectorStatsEvent(self.CurrentStep, self.AverageClockSkew, count)
+            #self.PublishEvent(event)
 
         return True
 
     # -----------------------------------------------------------------
-    def HandleShutdownEvent(self, event) :
+    def HandleShutdownEvent(self) :
         try :
             idlist = traci.vehicle.getIDList()
-            for v in idlist : 
+            for v in idlist :
                 traci.vehicle.remove(v)
-        
+
             traci.close()
             sys.stdout.flush()
 
@@ -261,10 +282,12 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
             self.__Logger.warn('shutdown failed with exception type %s; %s' %  (exctype, str(value)))
 
     # -----------------------------------------------------------------
-    def SimulationStart(self) :
-        sumoBinary = checkBinary('sumo')
-        sumoCommandLine = [sumoBinary, "-c", self.ConfigFile, "-l", "logs/sumo.log"]
-        
+    def initialize(self) :
+        if platform.system() == 'Windows' or platform.system().startswith("CYGWIN"):
+            sumoBinary = checkBinary('sumo.exe')
+        else:
+            sumoBinary = checkBinary('sumo')
+        sumoCommandLine = [sumoBinary, "-c", self.ConfigFile, "-l", "sumo.log"]
         self.SumoProcess = subprocess.Popen(sumoCommandLine, stdout=sys.stdout, stderr=sys.stderr)
         traci.init(self.Port)
 
@@ -273,12 +296,13 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         self.XSize = self.SimulationBoundary[1][0] - self.XBase
         self.YBase = self.SimulationBoundary[0][1]
         self.YSize = self.SimulationBoundary[1][1] - self.YBase
+        self.__Logger.warn("starting sumo connector")
 
         # initialize the edge list, drop all the internal edges
         self.EdgeList = []
         for edge in traci.edge.getIDList() :
             # this is just to ensure that everything is initialized first time
-            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge)) 
+            traci.edge.adaptTraveltime(edge, traci.edge.getTraveltime(edge))
 
             # only keep the "real" edges for computation for now
             if not edge.startswith(':') :
@@ -290,17 +314,16 @@ class SumoConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         for tl in tllist :
             self.TrafficLights[tl] = traci.trafficlights.getRedYellowGreenState(tl)
             traci.trafficlights.subscribe(tl,[tc.TL_RED_YELLOW_GREEN_STATE])
-        
+
         # initialize the induction loops
         illist = traci.inductionloop.getIDList()
         for il in illist :
             traci.inductionloop.subscribe(il, [tc.LAST_STEP_VEHICLE_NUMBER])
 
-        # subscribe to the events
-        self.SubscribeEvent(EventTypes.EventAddVehicle, self.HandleAddVehicleEvent)
-        self.SubscribeEvent(EventTypes.TimerEvent, self.HandleTimerEvent)
-        self.SubscribeEvent(EventTypes.ShutdownEvent, self.HandleShutdownEvent)
-
-        # all set... time to get to work!
-        self.HandleEvents()
-
+        # For testing purposes
+        #v1 = Vehicle()
+        #v1.Route = "rCity00:mall222E245N"
+        #v1.Target = "City10:mall230E245N=O=City10:mall222E245N"
+        #v1.Name = "Model A BLUE"
+        #v1.Type = "Model A BLUE"
+        #self.frame.add(v1)

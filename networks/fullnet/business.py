@@ -38,15 +38,14 @@ social framework including people and businesses.
 
 """
 
-import os, sys
 import logging
 
 import random
 
 from mobdat.common.Schedule import WeeklySchedule
 from mobdat.common.Utilities import GenName
-from mobdat.common.graph.Decoration import *
-from mobdat.common.graph import SocialNodes, SocialEdges, SocialDecoration
+from mobdat.common.graph import SocialDecoration, SocialNodes
+from mobdat.common.graph.SocialDecoration import BusinessType
 
 from mobdat.common.ValueTypes import WeightedChoice
 
@@ -93,7 +92,7 @@ def AddFactoryProfile(name, joblist) :
     global world
 
     jobs = ExpandJobList(joblist)
-    profile = world.AddBusinessProfile(name, SocialDecoration.BusinessType.Factory, jobs)
+    profile = world.AddBusinessProfile(name, BusinessType.Factory, jobs)
     profile.BusinessProfile.AddAnnotation(name)
 
     return profile
@@ -103,7 +102,7 @@ def AddRetailProfile(name, joblist, bizhours, customers, stime = 0.5) :
     global world
 
     jobs = ExpandJobList(joblist)
-    profile = world.AddBusinessProfile(name, SocialDecoration.BusinessType.Service, jobs)
+    profile = world.AddBusinessProfile(name, BusinessType.Service, jobs)
     SocialNodes.BusinessProfile.AddServiceProfile(profile, WeeklySchedule.WorkWeekSchedule(bizhours[0], bizhours[1]), customers, stime)
     profile.BusinessProfile.AddAnnotation(name)
 
@@ -114,7 +113,7 @@ def AddRestaurantProfile(name, joblist, bizhours, customers, stime = 1.5) :
     global world
 
     jobs = ExpandJobList(joblist)
-    profile = world.AddBusinessProfile(name, SocialDecoration.BusinessType.Food, jobs)
+    profile = world.AddBusinessProfile(name, BusinessType.Food, jobs)
     SocialNodes.BusinessProfile.AddServiceProfile(profile, WeeklySchedule.WorkWeekSchedule(bizhours[0], bizhours[1]), customers, stime)
     profile.BusinessProfile.AddAnnotation(name)
 
@@ -125,7 +124,7 @@ def AddSchoolProfile(name, joblist, students) :
     global world
 
     jobs = ExpandJobList(joblist)
-    profile = world.AddBusinessProfile(name, SocialDecoration.BusinessType.School, jobs)
+    profile = world.AddBusinessProfile(name, BusinessType.School, jobs)
     SocialNodes.BusinessProfile.AddServiceProfile(profile, WeeklySchedule.WorkWeekSchedule(8.0, 15.0), students, 7.0)
     profile.BusinessProfile.AddAnnotation(name)
 
@@ -249,7 +248,7 @@ def PlaceBusinesses() :
 
     # add some factories
     factory = profiles['large-factory']
-    for i in range(8) :
+    for _ in range(8) :
         name = GenName('large-factory')
         business = world.AddBusiness(name, ScaleProfile(factory))
         location = PlaceBusiness(business)
@@ -259,7 +258,7 @@ def PlaceBusinesses() :
 
     # add some factories
     school = profiles['high-school']
-    for i in range(2) :
+    for _ in range(2) :
         name = GenName('high-school')
         business = world.AddBusiness(name, ScaleProfile(school))
         location = PlaceBusiness(business)
@@ -269,7 +268,7 @@ def PlaceBusinesses() :
 
     # add some large services
     service = profiles['large-service']
-    for i in range(2) :
+    for _ in range(2) :
         name = GenName('large-service')
         business = world.AddBusiness(name, ScaleProfile(service))
         location = PlaceBusiness(business)

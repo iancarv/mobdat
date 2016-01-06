@@ -47,7 +47,7 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from GraphObject import *
+from mobdat.common.graph.GraphObject import GraphObject
 
 from mobdat.common.Utilities import GenName
 
@@ -82,7 +82,7 @@ class Node(GraphObject) :
         if not name : name = GenNodeName(prefix)
         GraphObject.__init__(self, name)
 
-        self.Members = []
+        self.Members = set()
         for member in members :
             self.AddMember(member)
 
@@ -92,7 +92,10 @@ class Node(GraphObject) :
         member.AddToCollection(self)
 
         # add to the group the reference to the object
-        self.Members.append(member)
+        if member not in self.Members:
+            self.Members.add(member)
+        else:
+            raise
 
     # -----------------------------------------------------------------
     def DropMember(self, member) :

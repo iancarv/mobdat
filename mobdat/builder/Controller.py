@@ -41,55 +41,109 @@ clock ticks.
 
 import os, sys, traceback
 import logging
+import cProfile
 
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
 import json
-
 from mobdat.common import LayoutSettings
 from mobdat.builder import WorldBuilder, OpenSimBuilder, SumoBuilder
 
+global world
+global laysettings
+
 logger = logging.getLogger(__name__)
+world = {}
+laysettings = {}
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 def Controller(settings, pushlist) :
+    global world
+    global laysettings
     """
     Controller is the main entry point for driving the network building process.
 
     Arguments:
     settings -- nested dictionary with variables for configuring the connectors
     """
-
+    rewrite_worldinfo = False
     laysettings = LayoutSettings.LayoutSettings(settings)
 
-    loadfile = settings["Builder"].get("LoadFile",None)
-    world = WorldBuilder.WorldBuilder.LoadFromFile(loadfile) if loadfile else WorldBuilder.WorldBuilder()
+    """
+    Phase 1: Load or create the world.
+    """
+    loadfile = settings["General"].get("WorldInfoFile","info.js")
+    partial_save = settings["Builder"].get("PartialSave","partial.js")
 
+    if os.path.isfile(loadfile):
+        logger.warn('Loading world info from js file. This may take a few minutes...')
+        try:
+            world = WorldBuilder.WorldBuilder.LoadFromFile(loadfile)
+        except:
+            logger.error("Could not load world info from file " + loadfile)
+    else:
+        try:
+            logger.warn('Loading partial world info from js file. This may take a few minutes...')
+            world = WorldBuilder.WorldBuilder.LoadFromFile(partial_save)
+        except (ValueError, IOError):
+            logger.warn('could not find partial save file, starting new world.')
+            world = WorldBuilder.WorldBuilder()
+            world.step = []
+        except:
+            raise
+
+
+    """
+    Phase 2: World is created. Run the extension files
+    """
     dbbindings = {"laysettings" : laysettings, "world" : world}
 
     for cf in settings["Builder"].get("ExtensionFiles",[]) :
         try :
-            execfile(cf, dbbindings)
+            #cProfile.runctx('execfile(cf,dbbindings)',{'cf':cf,'dbbindings':dbbindings},{})
+            if partial_save:
+                if cf not in world.step:
+                    execfile(cf,globals())
+                    world.step.append(cf)
+                    with open(partial_save, "w") as fp:
+                        json.dump(world.Dump(),fp,ensure_ascii=True)
+                    logger.info("saved partial world for {0}".format(cf))
+            else:
+                execfile(cf, dbbindings)
+            rewrite_worldinfo = True
             logger.info('loaded extension file %s', cf)
         except :
             logger.warn('unhandled error processing extension file %s\n%s', cf, traceback.format_exc(10))
             sys.exit(-1)
 
+    if rewrite_worldinfo:
+        # if worldinfo already exists, make another one
+        if os.path.isfile(loadfile):
+            i = 0
+            tmpfile = '{0}_{1}'.format(loadfile,i)
+            while os.path.isfile(tmpfile):
+                tmpfile = '{0}_{1}'.format(loadfile,i)
+                i+=1
+            loadfile = tmpfile
+
+        logger.info('saving world data to %s',loadfile)
+
+        with open(loadfile, "w") as fp :
+            # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)
+            json.dump(world.Dump(), fp, ensure_ascii=True)
+
+        if partial_save and os.path.isfile(partial_save):
+            os.remove(partial_save)
+
     for push in pushlist :
         if push == 'opensim' :
-            os = OpenSimBuilder.OpenSimBuilder(settings, world, laysettings)
-            os.PushNetworkToOpenSim()
+            logger.info("building opensim")
+            osb = OpenSimBuilder.OpenSimBuilder(settings, world, laysettings)
+            osb.PushNetworkToOpenSim()
         elif push == 'sumo' :
-            sc = SumoBuilder.SumoBuilder(settings, world, laysettings)
-            sc.PushNetworkToSumo()
-
-    # write the network information back out to the layinfo file
-    infofile = settings["General"].get("WorldInfoFile","info.js")
-    logger.info('saving world data to %s',infofile)
-
-    with open(infofile, "w") as fp :
-        # json.dump(world.Dump(), fp, indent=2, ensure_ascii=True)
-        json.dump(world.Dump(), fp, ensure_ascii=True)
+            logger.info("building sumo")
+            scb = SumoBuilder.SumoBuilder(settings, world, laysettings)
+            scb.PushNetworkToSumo()

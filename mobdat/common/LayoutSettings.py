@@ -107,6 +107,8 @@ class LayoutSettings :
 
         self.IntersectionTypeMap = {}
         self.RoadTypeMap = {}
+        self.Cities = {}
+        self.CityConnections = []
 
         self.ProcessSettings(settings)
 
@@ -133,3 +135,11 @@ class LayoutSettings :
         for vtype in settings["VehicleTypes"] :
             vinfo = VehicleTypeInfo(vtype)
             self.VehicleTypes[vinfo.Name] = vinfo
+
+        for cities in settings["Cities"]:
+            name = cities["Name"]
+            offset = cities["Offset"]
+            self.Cities[name] = {}
+            self.Cities[name]["Offset"] = offset
+
+        self.CityConnections = settings["CityConnections"]

@@ -45,11 +45,10 @@ sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","p
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-import uuid
-import OpenSimRemoteControl
-from mobdat.common.graph import Graph
 from mobdat.common.graph.LayoutDecoration import EdgeMapDecoration
-
+from mobdat.common.graph import Edge
+from mobdat.common.Utilities import AuthByUserName, GenCoordinateMap,\
+    CalculateOSCoordinates, CalculateOSCoordinatesFromOrigin
 import json
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -67,14 +66,17 @@ class OpenSimBuilder :
         self.NodeMap = {}
 
         try :
-            self.OpenSimConnector = OpenSimRemoteControl.OpenSimRemoteControl(settings["OpenSimConnector"]["EndPoint"])
-            self.OpenSimConnector.Capability = uuid.UUID(settings["OpenSimConnector"]["Capability"])
-            self.OpenSimConnector.Scene = settings["OpenSimConnector"]["Scene"]
+            AuthByUserName(settings)
+            self.RegionMap = GenCoordinateMap(settings)
+            woffs = settings["OpenSimConnector"]["BuildOffset"]
+            self.BuildOffsetX = woffs[0]
+            self.BuildOffsetY = woffs[1]
 
-            woffs = settings["OpenSimConnector"]["WorldCenter"]
-            self.WorldCenterX = woffs[0]
-            self.WorldCenterY = woffs[1]
-            self.WorldCenterZ = woffs[2]
+            rsize = settings["OpenSimConnector"]["RegionSize"]
+            self.RegionSizeX = rsize[0]
+            self.RegionSizeY = rsize[1]
+
+            self.Scenes = settings["OpenSimConnector"]["Scenes"]
 
             self.WorldScale = settings["OpenSimConnector"].get("Scale",0.5)
 
@@ -86,7 +88,7 @@ class OpenSimBuilder :
             sys.exit(-1)
         except :
             exctype, value =  sys.exc_info()[:2]
-            self._Logger.warn('handler failed with exception type %s; %s', exctype, str(value))
+            self.Logger.warn('handler failed with exception type %s; %s', exctype, str(value))
             sys.exit(-1)
 
     # -----------------------------------------------------------------
@@ -94,20 +96,21 @@ class OpenSimBuilder :
         oname = assetinfo["ObjectName"]
         iname = assetinfo["ItemName"]
 
-        result = self.OpenSimConnector.FindObjects(pattern = oname)
-        if not result["_Success"] or len(result["Objects"]) == 0 :
-            self.Logger.warn("Unable to locate container object %s; %s",oname, result["_Message"])
-            sys.exit(-1)
+        for name,sim in self.Scenes.items():
+            conn = sim["RemoteControl"]
+            result = conn.FindObjects(pattern = oname)
+            if not result["_Success"] or len(result["Objects"]) == 0 :
+                continue
 
-        objectid = result["Objects"][0]
-        result = self.OpenSimConnector.GetObjectInventory(objectid)
-        if not result["_Success"] :
-            self.Logger.warn("Failed to get inventory from container object %s; %s",oname, result["_Message"])
-            sys.exit(-1)
-            
-        for item in result["Inventory"] :
-            if item["Name"] == iname :
-                return item["AssetID"]
+            objectid = result["Objects"][0]
+            result = conn.GetObjectInventory(objectid)
+            if not result["_Success"] :
+                self.Logger.warn("Failed to get inventory from container object %s; %s",oname, result["_Message"])
+                sys.exit(-1)
+
+            for item in result["Inventory"] :
+                if item["Name"] == iname :
+                    return item["AssetID"]
 
         self.Logger.warn("Failed to locate item %s in object %s",iname, oname);
         return None
@@ -185,8 +188,7 @@ class OpenSimBuilder :
             self.Logger.warn('something went wrong computing the signature')
             return(0,0,0,0)
 
-        return (s1x + self.WorldCenterX, s1y + self.WorldCenterY, e1x + self.WorldCenterX, e1y + self.WorldCenterY)
-
+        return CalculateOSCoordinatesFromOrigin(s1x + self.BuildOffsetX, s1y + self.BuildOffsetY, e1x + self.BuildOffsetX, e1y + self.BuildOffsetY, self)
 
     # -----------------------------------------------------------------
     def PushNetworkToOpenSim(self) :
@@ -213,9 +215,7 @@ class OpenSimBuilder :
                     asset = self.FindAssetInObject(asset)
                     self.LayoutSettings.RoadTypeMap[road.RoadType.Name][0].AssetID = asset
 
-                (p1x, p1y, p2x, p2y) = self.ComputeLocation(road.StartNode, road.EndNode)
-
-                #startparms = "{ 'spoint' : '<%f, %f, %f>', 'epoint' : '<%f, %f, %f>' }" % (p1x, p1y, zoff, p2x, p2y, zoff)
+                (p1x, p1y),(p2x, p2y),scene = self.ComputeLocation(road.StartNode, road.EndNode)
                 sparms = {}
                 sparms['spoint'] = '<%f, %f, %f>' % (p1x, p1y, zoff)
                 sparms['epoint'] = '<%f, %f, %f>' % (p2x, p2y, zoff)
@@ -223,12 +223,13 @@ class OpenSimBuilder :
                 sparms['type'] = road.RoadType.Dump()
                 startparms = json.dumps(sparms)
 
+                conn = scene["RemoteControl"]
                 if abs(p1x - p2x) > 0.1 or abs(p1y - p2y) > 0.1 :
-                    result = self.OpenSimConnector.CreateObject(asset, pos=[p1x, p1y, zoff], name=road.Name, parm=startparms)
+                    result = conn.CreateObject(asset, pos=[p1x, p1y, zoff], name=road.Name, parm=startparms)
 
             # build the map so that we do render the reverse roads
-            self.RoadMap[Graph.GenEdgeName(road.StartNode, road.EndNode)] = True
-            self.RoadMap[Graph.GenEdgeName(road.EndNode, road.StartNode)] = True
+            self.RoadMap[Edge.GenEdgeName(road.StartNode, road.EndNode)] = True
+            self.RoadMap[Edge.GenEdgeName(road.EndNode, road.StartNode)] = True
     
 
     # -----------------------------------------------------------------
@@ -248,8 +249,7 @@ class OpenSimBuilder :
             if rot >= 0 :
                 self.NodeMap[name] = itype
 
-                p1x = node.Coord.X + self.WorldCenterX
-                p1y = node.Coord.Y + self.WorldCenterY
+                (p1x,p1y),sim = CalculateOSCoordinates(node.Coord.X + self.BuildOffsetX, node.Coord.Y + self.BuildOffsetY, self)
                 p1z = itype.ZOffset
                 asset = itype.AssetID
                 if type(asset) == dict :
@@ -266,7 +266,7 @@ class OpenSimBuilder :
                 startparms = json.dumps(sparms)
 
                 if node.IntersectionType.Render :
-                    result = self.OpenSimConnector.CreateObject(asset, pos=[p1x, p1y, p1z], name=name, parm=startparms)
+                    result = sim["RemoteControl"].CreateObject(asset, pos=[p1x, p1y, p1z], name=name, parm=startparms)
 
                 success = True
                 break

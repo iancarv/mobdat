@@ -7,15 +7,15 @@ modification, are permitted provided that the following conditions are
 met:
 
 * Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer. 
+  this list of conditions and the following disclaimer.
 
 * Redistributions in binary form must reproduce the above copyright
   notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution. 
+  documentation and/or other materials provided with the distribution.
 
 * Neither the name of Intel Corporation nor the names of its
   contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission. 
+  this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -27,7 +27,7 @@ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
 PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @file    EventTypes.py
 @author  Mic Bowman
@@ -37,7 +37,7 @@ This module defines a variety of event classes.
 
 """
 
-import os, sys, warnings
+import os, sys
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
@@ -165,23 +165,24 @@ class ObjectEvent :
     def __str__(self) :
         fstring = "Identity:{0}"
         return fstring.format(self.ObjectIdentity)
-
     # -----------------------------------------------------------------
     def Dump(self) :
         fstring = "<{0},{1}>"
-        return fstring.format(self.__class__.__name__, ObjectEvent.__str__(self))
+        return fstring.format(self.__class__.__name__,str(self))
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 class EventCreateObject(ObjectEvent) :
     # -----------------------------------------------------------------
-    def __init__(self, identity, objtype) :
+    def __init__(self, identity, objtype, pos) :
         ObjectEvent.__init__(self, identity)
         self.ObjectType = objtype
+        # Need position to determine on which simulator should the object be created
+        self.ObjectPosition = pos
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = ObjectEvent.__str__(self)
+        pstring = super(EventCreateObject,self).__str__()
         fstring = "{0},ObjectType:{1}"
         return fstring.format(pstring,self.ObjectType)
 
@@ -198,9 +199,12 @@ class EventAddVehicle(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = ObjectEvent.__str__(self)
-        fstring = "{0},Route:{1}"
-        return fstring.format(pstring,self.Route)
+        #pstring = super(EventCreateVehicle,self).__str__()
+        #fstring = "{0},Route:{1}"
+        #return fstring.format(pstring,self.Route)
+
+        pstring = "Identity:%s,Type:%s,Route:%s" % (self.ObjectIdentity, self.ObjectType, self.Route)
+        return pstring
 
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -209,6 +213,11 @@ class EventDeleteObject(ObjectEvent) :
     # -----------------------------------------------------------------
     def __init__(self, identity) :
         ObjectEvent.__init__(self, identity)
+
+    # -----------------------------------------------------------------
+    def __str__(self) :
+        pstring = super(EventDeleteObject,self).__str__()
+        return pstring
 
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -221,7 +230,7 @@ class EventPropertyChange(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = ObjectEvent.__str__(self)
+        pstring = super(EventPropertyChange,self).__str__()
         fstring = "{0},{1}:{2}"
         return fstring.format(pstring,self.ObjectProperty,self.ObjectValue)
 
@@ -238,7 +247,7 @@ class EventObjectDynamics(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = ObjectEvent.__str__(self)
+        pstring = super(EventObjectDynamics,self).__str__()
         fstring = "{0},x:{1},y:{2},z:{3}"
         return fstring.format(pstring,self.ObjectPosition.x,self.ObjectPosition.y,self.ObjectPosition.z)
 
@@ -252,7 +261,7 @@ class EventInductionLoop(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = ObjectEvent.__str__(self)
+        pstring = super(EventInductionLoop,self).__str__()
         fstring = "{0},VehicleCount:{1}"
         return fstring.format(pstring,self.VehicleCount)
 
@@ -266,8 +275,6 @@ class EventTrafficLightStateChange(ObjectEvent) :
 
     # -----------------------------------------------------------------
     def __str__(self) :
-        pstring = ObjectEvent.__str__(self)
-        fstring = "{0},state:{1}"
+        pstring = super(EventTrafficLightStateChange,self).__str__()
+        fstring = "{0},state:{2}"
         return fstring.format(pstring,self.StopLightState)
-
-

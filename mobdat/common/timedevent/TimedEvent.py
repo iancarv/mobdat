@@ -37,19 +37,18 @@ This package defines modules for the mobdat simulation environment
 
 """
 
-import os, sys, traceback
+import os, sys
 import logging
+from mobdat.common.timedevent.IntervalVariable import GaussianIntervalVariable,\
+    MaximumIntervalVariable, MinimumIntervalVariable
+from mobdat.common.Utilities import GenName
+from mobdat.common.timedevent.Constraint import OrderConstraint
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
-
-from mobdat.common.Utilities import GenName
-from mobdat.common.timedevent.IntervalVariable import *
-from mobdat.common.timedevent.Constraint import *
-from mobdat.common.TravelTimeEstimator import TravelTimeEstimator
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +68,9 @@ class TripEvent :
 class PlaceEvent :
 
     # -----------------------------------------------------------------
-    def __init__(self, details, stimevar, etimevar, duration = 0.01, id = None) :
+    def __init__(self, details, stimevar, etimevar, duration = 0.01, pe_id = None) :
         self.Details = details
-        self.EventID = id or GenName('PLACE')
+        self.EventID = pe_id or GenName('PLACE')
         
         # EventStart and EventEnd properties contain the original interval definitions, all
         # constraint resolution will happen on copies of these variables stored
@@ -233,8 +232,8 @@ class AggregateDurationEvent(PlaceEvent) :
         return work
     
     # -----------------------------------------------------------------
-    def __init__(self, details, stimevar, etimevar, duration = 0.01, id = None) :
-        PlaceEvent.__init__(self, details, stimevar, etimevar, duration, id)
+    def __init__(self, details, stimevar, etimevar, duration = 0.01, ade_id = None) :
+        PlaceEvent.__init__(self, details, stimevar, etimevar, duration, ade_id)
 
         self.MinimumSplitDuration = duration
         self.AggregateID = GenName('AGGREGATE')
@@ -293,11 +292,11 @@ class TravelEvent :
     DefaultDuration = 0.5
 
     # -----------------------------------------------------------------
-    def __init__(self, srcplace, dstplace, estimator = None, id = None) :
+    def __init__(self, srcplace, dstplace, estimator = None, te_id = None) :
         self.SrcPlace = srcplace
         self.DstPlace = dstplace
         self.Duration = estimator.ComputeTravelTime(srcplace.Details, dstplace.Details) if estimator else self.DefaultDuration
-        self.EventID = id or GenName('TRAVEL')
+        self.EventID = te_id or GenName('TRAVEL')
 
     # -----------------------------------------------------------------
     def AddVariables(self, vstore) :

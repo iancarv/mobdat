@@ -40,6 +40,8 @@ network such as building a grid of roads.
 
 import os, sys
 import logging
+from mobdat.common.graph.Decoration import CommonDecorations
+import re
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
@@ -47,12 +49,8 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-from Decoration import *
-from Node import *
-from Edge import *
-from mobdat.common.Utilities import GenName
-
-import re
+from mobdat.common.graph.Node import Node
+from mobdat.common.graph.Edge import Edge
 import json
 
 logger = logging.getLogger(__name__)
@@ -144,7 +142,7 @@ class Graph :
         elif name in self.Edges :
             return self.Edges[name]
         else :
-            raise NameError("graph contains no object named %s" % mname)
+            raise NameError("graph contains no object named %s" % name)
 
     # =================================================================
     # NODE methods
@@ -167,7 +165,7 @@ class Graph :
             collection.DropMember(node)
 
         # drop all nodes that are a member of this one
-        for obj in node.Members[:] :
+        for obj in node.Members :
             node.DropMember(obj)
 
         for edge in node.InputEdges[:] :
@@ -213,7 +211,7 @@ class Graph :
             nodetype -- string name of a node type
         """
         nodes = []
-        for name, node in self.IterNodes(pattern, nodetype, predicate) :
+        for _, node in self.IterNodes(pattern, nodetype, predicate) :
             nodes.append(node)
 
         return nodes
@@ -333,7 +331,7 @@ class Graph :
         if name in self.Edges :
             return self.Edges[name]
         else :
-            raise NameError("graph contains no edge named %s" % mname)
+            raise NameError("graph contains no edge named %s" % name)
             
     # -----------------------------------------------------------------
     def FindEdgeBetweenNodes(self, node1, node2) :
@@ -346,6 +344,7 @@ class Graph :
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 if __name__ == '__main__' :
+    """
     from mobdat.common.graph.Node import *
     from mobdat.common.graph.Edge import *
     from mobdat.common.graph.Decoration import *
@@ -451,3 +450,4 @@ if __name__ == '__main__' :
     print "type2edges"
     for e in net2.Collections['type2edges'].Members :
         print "{0} has weight {1}".format(e.Name, e.EdgeType.Weight)
+    """

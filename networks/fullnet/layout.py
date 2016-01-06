@@ -47,7 +47,13 @@ from mobdat.common.Utilities import GenName, GenNameFromCoordinates
 from mobdat.common.graph.SocialDecoration import BusinessType
 
 logger = logging.getLogger('layout')
+if 'world' not in globals() and 'world' not in locals():
+    world = None
+    exit('no world global variable')
 
+if 'laysettings' not in globals() and 'laysettings' not in locals():
+    laysettings = None
+    exit('no laysettings variable')
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 def ConvertNodeCoordinate(prefix, p) :

@@ -41,17 +41,18 @@ clock ticks.
 
 import os, sys
 import logging
+from cadis.frame import Frame
+from cadis.store.simplestore import SimpleStore
 
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
-import platform, time, threading, cmd, readline
+import platform, time, threading, cmd
 import EventRouter, EventTypes
+from mobdat.common.Utilities import AuthByUserName
 from mobdat.common import LayoutSettings, WorldInfo
 from multiprocessing import Process
-
-import json
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
@@ -59,9 +60,9 @@ import SumoConnector, OpenSimConnector, SocialConnector, StatsConnector
 
 _SimulationControllers = {
     'sumo' : SumoConnector.SumoConnector,
-    'opensim' : OpenSimConnector.OpenSimConnector,
     'social' : SocialConnector.SocialConnector,
-    'stats' : StatsConnector.StatsConnector
+    'stats' : StatsConnector.StatsConnector,
+    'opensim' : OpenSimConnector.OpenSimConnector
     }
 
 logger = logging.getLogger(__name__)
@@ -212,46 +213,54 @@ def Controller(settings) :
     """
 
     laysettings = LayoutSettings.LayoutSettings(settings)
-
+    #laysettings = None
     # load the world
     infofile = settings["General"].get("WorldInfoFile","info.js")
     logger.info('loading world data from %s',infofile)
     world = WorldInfo.WorldInfo.LoadFromFile(infofile)
+    #world = None
 
     cnames = settings["General"].get("Connectors",['sumo', 'opensim', 'social', 'stats'])
-
-    evrouter = EventRouter.EventRouter()
-
+    #if 'opensim' in cnames:
+    #    cnames.remove('opensim')
+    #    for sname in settings["OpenSimConnector"]["Scenes"].keys():
+    #        _SimulationControllers['osc:'+sname] = OpenSimConnector.OpenSimConnector
+    #        cnames.append('osc:'+sname)
+    # evrouter = EventRouter.EventRouter()
     # initialize the connectors first
     connectors = []
+    store = SimpleStore()
     for cname in cnames :
         if cname not in _SimulationControllers :
             logger.warn('skipping unknown simulation connector; %s' % (cname))
             continue
 
-        connector = _SimulationControllers[cname](evrouter, settings, world, laysettings)
-        connproc = Process(target=connector.SimulationStart, args=())
-        connproc.start()
-        connectors.append(connproc)
+        cframe = Frame(store)
+        connector = _SimulationControllers[cname](settings, world, laysettings, cname, cframe)
+        cframe.attach(connector)
+        #connproc = Process(target=connector.SimulationStart, args=())
+        #connproc.start()
+        connectors.append(cframe)
+        cframe.go()
             
-    evrouterproc = Process(target=evrouter.RouteEvents, args=())
-    evrouterproc.start()
+    #evrouterproc = Process(target=evrouter.RouteEvents, args=())
+    #evrouterproc.start()
 
     # start the timer thread
-    thread = TimerThread(evrouter, settings)
-    thread.start()
+    #thread = TimerThread(evrouter, settings)
+    #thread.start()
 
-    controller = MobdatController(evrouter, logger)
-    controller.cmdloop()
+    #controller = MobdatController(evrouter, logger)
+    #controller.cmdloop()
 
-    thread.join()
+    #thread.join()
 
     # send the shutdown event to the connectors
     for connproc in connectors :
         connproc.join()
 
     # and send the shutdown event to the router
-    event = EventTypes.ShutdownEvent(True)
-    evrouter.RouterQueue.put(event)
+    #event = EventTypes.ShutdownEvent(True)
+    #evrouter.RouterQueue.put(event)
 
-    evrouterproc.join()
+    #evrouterproc.join()

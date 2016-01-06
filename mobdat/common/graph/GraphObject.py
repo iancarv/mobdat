@@ -40,14 +40,14 @@ network such as building a grid of roads.
 
 import os, sys
 import logging
+import random
+from mobdat.common.graph.Decoration import NodeTypeDecoration
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
-
-from Decoration import *
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +56,16 @@ logger = logging.getLogger(__name__)
 class GraphObject :
 
     # -----------------------------------------------------------------
+    @staticmethod
     def __init__(self, name) :
         self.Name = name
         self.Decorations = {}
         self.Collections = {}
+
+        self.InheritedDecorations = {}
+
+        self.CollectionNodeTypes = {}
+        self.OutputEdgesNodeTypes = {}
 
         self.OutputEdges = []
         self.InputEdges = []
@@ -74,23 +80,36 @@ class GraphObject :
         Look for a reference to the attribute among the collection of decorations
         associated with the object and in the output edges. 
         """
-
+        #provider = self.FindDecorationProvider(attr)
         # First look for a decoration with the right name
-        provider = self.FindDecorationProvider(attr)
+        provider = None
+        if attr in self.Decorations:
+            provider = self
+        elif attr in self.InheritedDecorations:
+            provider = random.sample(self.InheritedDecorations[attr],1)[0]
+
         if provider :
             return provider.Decorations[attr]
 
         # Check to see if the attribute is the name of a collection in which
         # this node is a member, gives explicit access to the collections
-        for coll in self.Collections.itervalues() :
-            if attr == coll.Decorations['NodeType'].Name :
-                return coll
+        if attr in self.CollectionNodeTypes:
+            return self.CollectionNodeTypes[attr]
 
         # Next look for an edge with the right name, if there
         # are multiple then take the first one found
-        for edge in self.OutputEdges :
-            if edge.NodeType.Name == attr :
-                return edge.EndNode
+        if attr in self.OutputEdgesNodeTypes:
+            return random.sample(self.OutputEdgesNodeTypes[attr],1)[0]
+
+        # If nothing else works, lets try outside of the cache: maybe some new
+        # collection was added
+        if not attr.startswith('__'):
+            provider = self._LastResortSearch(attr)
+            if provider:
+                try:
+                    return provider.Decorations[attr]
+                except:
+                    return provider
 
         nodetype = self.__class__.__name__
         if 'NodeType' in self.Decorations :
@@ -169,19 +188,74 @@ class GraphObject :
     # -----------------------------------------------------------------
     def AddOutputEdge(self, edge) :
         self.OutputEdges.append(edge)
+        name = edge.Decorations['NodeType'].Name
+        if name not in self.OutputEdgesNodeTypes:
+            self.OutputEdgesNodeTypes[name] = []
+        self.OutputEdgesNodeTypes[name].append(edge.EndNode)
 
     # -----------------------------------------------------------------
     def AddToCollection(self, collection) :
         self.Collections[collection.Name] = collection
 
+        for attr in collection.Decorations.keys():
+            if attr not in self.InheritedDecorations:
+                self.InheritedDecorations[attr] = set()
+            self.InheritedDecorations[attr].add(collection)
+
+        self.CollectionNodeTypes[collection.Decorations['NodeType'].Name] = collection
+
     # -----------------------------------------------------------------
     def DropFromCollection(self, collection) :
         del self.Collections[collection.Name]
+
+        # Clean up inherited decorations
+        delnames = []
+        delnodetypes = []
+        for attr,colls in self.InheritedDecorations.items():
+            for coll in colls:
+                if (coll.Name == collection.Name):
+                    delnames.append((attr,coll))
+
+        for attr,coll in self.CollectionNodeTypes.items():
+            if (coll.Name == collection.Name):
+                delnodetypes.append(attr)
+
+        for attr,coll in delnames:
+            self.InheritedDecorations[attr].remove(coll)
+        for nodetype in delnodetypes:
+            del self.CollectionNodeTypes[nodetype]
 
     # -----------------------------------------------------------------
     def AddDecoration(self, decoration) :
         decoration.HostObject = self
         self.Decorations[decoration.DecorationName] = decoration
+
+    # -----------------------------------------------------------------
+    def _LastResortSearch(self, attr):
+        # Parse through inherited decorations
+        for coll in self.Collections.itervalues() :
+            if attr in coll.Decorations :
+                if attr not in self.InheritedDecorations:
+                    self.InheritedDecorations = []
+                self.InheritedDecorations[attr].append(coll)
+                return coll
+
+        # Check to see if the attribute is the name of a collection in which
+        # this node is a member, gives explicit access to the collections
+        for coll in self.Collections.itervalues() :
+            if attr == coll.Decorations['NodeType'].Name :
+                return coll
+
+        # Next look for an edge with the right name, if there
+        # are multiple then take the first one found
+        for edge in self.OutputEdges :
+            if edge.Decorations['NodeType'].Name == attr :
+                if attr not in self.OutputEdgesNodeTypes:
+                    self.OutputEdgesNodeTypes[attr] = []
+                self.OutputEdgesNodeTypes[attr].append(edge.EndNode)
+                return edge.EndNode
+
+        return None
 
     # -----------------------------------------------------------------
     def FindDecorationProvider(self, attr) :
@@ -195,11 +269,10 @@ class GraphObject :
         """
         if attr in self.Decorations :
             return self
-
         # inherit the decorations of all the collections the object is in
-        for coll in self.Collections.itervalues() :
-            if attr in coll.Decorations :
-                return coll
+        elif attr in self.InheritedDecorations:
+            if len(self.InheritedDecorations[attr]) > 0:
+                return random.sample(self.InheritedDecorations[attr],1)[0]
 
         return None
 
@@ -217,8 +290,17 @@ class GraphObject :
 
         result['Name'] = self.Name
         result['Decorations'] = []
+        decnames = set()
         for decoration in self.Decorations.itervalues() :
-            result['Decorations'].append(decoration.Dump())
+            if decoration.DecorationName not in decnames:
+                result['Decorations'].append(decoration.Dump())
+                decnames.add(decoration.DecorationName)
+        for decoration,colls in self.InheritedDecorations.items() :
+            for coll in colls:
+                for decoration in coll.Decorations.itervalues():
+                    if decoration.DecorationName not in decnames:
+                        result['Decorations'].append(decoration.Dump())
+                        decnames.add(decoration.DecorationName)
 
         return result
 

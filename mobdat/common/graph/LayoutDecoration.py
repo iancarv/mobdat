@@ -343,13 +343,13 @@ class CapsuleDecoration(Decoration) :
     # -----------------------------------------------------------------
     @property
     def SourceName(self) :
-        node = random.choice(self.HostObject.Members)
+        node = random.sample(self.HostObject.Members,1)[0]
         return node.EndPoint.SourceName
 
     # -----------------------------------------------------------------
     @property
     def DestinationName(self) :
-        node = random.choice(self.HostObject.Members)
+        node = random.sample(self.HostObject.Members,1)[0]
         return node.EndPoint.DestinationName
 
 
@@ -480,7 +480,10 @@ class BusinessLocationDecoration(Decoration) :
 
         # Return the capsule where the business is assigned, with BusinessLocation nodes
         # there should really only be one capsule
-        return random.choice(self.HostObject.Members)
+        if len(self.HostObject.Members) > 0:
+            return random.sample(self.HostObject.Members,1)[0]
+        else:
+            raise IndexError
 
     # -----------------------------------------------------------------
     def Dump(self) :

@@ -189,6 +189,13 @@ class Vector3 :
         fmt = "<{0:f}, {1:f}, {2:f}>"
         return fmt.format(self.x, self.y, self.z)
 
+    def __json__(self):
+        return self.__dict__
+
+    @staticmethod
+    def __decode__(dic):
+        return Vector3(dic['x'], dic['y'], dic['z'])
+
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 class Quaternion :

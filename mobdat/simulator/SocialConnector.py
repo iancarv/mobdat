@@ -40,6 +40,9 @@ the social (people) aspects of the mobdat simulation.
 
 import os, sys
 import logging
+from mobdat.simulator.DataModel import Vehicle
+from cadis.common.IFramed import Producer, GetterSetter
+from cadis.common import IFramed
 
 sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), "tools"))
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
@@ -47,17 +50,19 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib")))
 
 import heapq
-import BaseConnector, EventRouter, EventHandler, EventTypes, Traveler, Trip
+import BaseConnector, EventHandler, EventTypes, Traveler
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-class SocialConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
+@Producer(Vehicle)
+@GetterSetter(Vehicle)
+class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
            
     # -----------------------------------------------------------------
-    def __init__(self, evrouter, settings, world, netsettings) :
-        EventHandler.EventHandler.__init__(self, evrouter)
+    def __init__(self, settings, world, netsettings, cname, frame) :
+        #EventHandler.EventHandler.__init__(self, evrouter)
         BaseConnector.BaseConnector.__init__(self, settings, world, netsettings)
-
+        self.frame = frame
         self.__Logger = logging.getLogger(__name__)
 
         self.MaximumTravelers = int(settings["General"].get("MaximumTravelers", 0))
@@ -106,8 +111,8 @@ class SocialConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         sname = trip.Source.Name
         dname = trip.Destination.Name
 
-        event = EventTypes.TripBegStatsEvent(self.CurrentStep, pname, tripid, sname, dname)
-        self.PublishEvent(event)
+        #event = EventTypes.TripBegStatsEvent(self.CurrentStep, pname, tripid, sname, dname)
+        #self.PublishEvent(event)
 
 
     # -----------------------------------------------------------------
@@ -123,8 +128,8 @@ class SocialConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         sname = trip.Source.Name
         dname = trip.Destination.Name
 
-        event = EventTypes.TripEndStatsEvent(self.CurrentStep, pname, tripid, sname, dname)
-        self.PublishEvent(event)
+        #event = EventTypes.TripEndStatsEvent(self.CurrentStep, pname, tripid, sname, dname)
+        #self.PublishEvent(event)
 
     # -----------------------------------------------------------------
     def GenerateAddVehicleEvent(self, trip) :
@@ -135,19 +140,25 @@ class SocialConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         trip -- Trip object initialized with traveler, vehicle and destination information
         """
 
-        vname = str(trip.VehicleName)
-        vtype = str(trip.VehicleType)
-        rname = str(trip.Source.Capsule.DestinationName)
-        tname = str(trip.Destination.Capsule.SourceName)
+        #vname = str(trip.VehicleName)
+        #vtype = str(trip.VehicleType)
+        #rname = str(trip.Source.Capsule.DestinationName)
+        #tname = str(trip.Destination.Capsule.SourceName)
+        v = Vehicle()
+        v.Name = trip.VehicleName
+        v.Type = trip.VehicleType
+        v.Route = trip.Source.Capsule.DestinationName
+        v.Target = trip.Destination.Capsule.SourceName
+        self.frame.add(v)
 
-        self.__Logger.debug('add vehicle %s from %s to %s',vname, rname, tname)
+        self.__Logger.debug('add vehicle %s of type %s from %s to %s',v.Name, v.Type, v.Route, v.Target)
 
         # save the trip so that when the vehicle arrives we can get the trip
         # that caused the car to be created
-        self.TripCallbackMap[vname] = trip
+        self.TripCallbackMap[v.Name] = trip
 
-        event = EventTypes.EventAddVehicle(vname, vtype, rname, tname)
-        self.PublishEvent(event)
+        #event = EventTypes.EventAddVehicle(vname, vtype, rname, tname)
+        #self.PublishEvent(event)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # EVENT HANDLERS
@@ -168,14 +179,14 @@ class SocialConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         trip.TripCompleted(self)
 
     # -----------------------------------------------------------------
-    def HandleTimerEvent(self, event) :
+    def update(self) :
         """
         HandleTimerEvent -- timer event happened, process pending events from
         the eventq
 
         event -- Timer event object
         """
-        self.CurrentStep = event.CurrentStep
+        self.CurrentStep = self.frame.step
 
         if self.CurrentStep % 100 == 0 :
             wtime = self.WorldTime
@@ -195,10 +206,10 @@ class SocialConnector(EventHandler.EventHandler, BaseConnector.BaseConnector) :
         pass
 
     # -----------------------------------------------------------------
-    def SimulationStart(self) :
-        self.SubscribeEvent(EventTypes.EventDeleteObject, self.HandleDeleteObjectEvent)
-        self.SubscribeEvent(EventTypes.TimerEvent, self.HandleTimerEvent)
-        self.SubscribeEvent(EventTypes.ShutdownEvent, self.HandleShutdownEvent)
-
+    def initialize(self) :
+        #self.SubscribeEvent(EventTypes.EventDeleteObject, self.HandleDeleteObjectEvent)
+        #self.SubscribeEvent(EventTypes.TimerEvent, self.HandleTimerEvent)
+        #self.SubscribeEvent(EventTypes.ShutdownEvent, self.HandleShutdownEvent)
+        pass
         # all set... time to get to work!
-        self.HandleEvents()
+        #self.HandleEvents()
