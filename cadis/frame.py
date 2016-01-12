@@ -15,9 +15,12 @@ import time
 import platform
 
 import uuid
+import random
 
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[FRAME]"
+
+USE_REMOTE_STORE = True # TODO Convert C# server to accept Strings instead of Integer
 
 SimulatorStartup = True
 SimulatorShutdown = False
@@ -197,8 +200,11 @@ class Frame(object):
 
         if Frame.Store == None:
             logger.debug("%s creating new store", LOG_HEADER)
-            Frame.Store = SimpleStore()
-        #Frame.Store = RemoteStore()
+            if USE_REMOTE_STORE:
+                Frame.Store = RemoteStore()
+            else:
+                Frame.Store = SimpleStore()
+
 
     def execute_Frame(self):
         self.pull()
@@ -304,10 +310,16 @@ class Frame(object):
     def add(self, obj):
         if obj.__class__ in self.storebuffer:
             #logger.debug("%s Creating new object %s.%s", LOG_HEADER, obj.__class__, obj._primarykey)
-            if obj._primarykey == None:
-                obj._primarykey = uuid.uuid4()
+            if isinstance(Frame.Store, RemoteStore):
+                if obj._primarykey == None:
+                    obj._primarykey =  random.randint(0, 9999999) # uuid.uuid4()
+                else:
+                    obj._primarykey = int(obj._primarykey) # Checks if assigned primary is a valid Integer
             else:
-                obj._primarykey = uuid.UUID(obj._primarykey) # Checks if assigned primary is a valid uuid
+                if obj._primarykey == None:
+                    obj._primarykey =  uuid.uuid4()
+                else:
+                    obj._primarykey = uuid.UUID(obj._primarykey) # Checks if assigned primary is a valid uuid
             obj._frame = self
             self.newlyproduced[obj.__class__].append(obj)
             self.storebuffer[obj.__class__][obj._primarykey] = obj
