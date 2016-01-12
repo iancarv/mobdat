@@ -40,7 +40,11 @@ class PedestrianSimulation(IFramed):
         logger.info("%s Tick", LOG_HEADER)
         if self.ticks % self.TICKS_BETWEEN_PEDESTRIANS == 0:
             try:
-                pass
+                inactives = self.frame.get(StoppedPedestrian)
+                logger.debug("%s ************** StoppedPedestrian: %s", LOG_HEADER, len(inactives))
+                if inactives != None and len(inactives) > 0:
+                    logger.debug("%s ************** Moving Pedestrian %s", LOG_HEADER, inactives[0].ID)
+                    inactives[0].move();
 
             except Exception:
                 logger.exception("Error: ")
@@ -48,5 +52,7 @@ class PedestrianSimulation(IFramed):
         endangereds = self.frame.get(PedestrianInDanger)
         logger.debug("%s ************** PedestrianInDanger: %s", LOG_HEADER, len(endangereds))
         for pedestrian in endangereds:
+            pedestrian.move()
+        for pedestrian in self.frame.get(Walker):
             pedestrian.move()
         self.ticks += 1
