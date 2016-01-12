@@ -9,6 +9,8 @@ from cadis.language.schema import dimension, Set, SubSet, CADIS, dimensions, set
 from collections import namedtuple
 from cadis.frame import Frame
 
+import traceback
+
 
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[DATAMODEL]"
@@ -56,7 +58,7 @@ class Car(CADIS):
     FINAL_POSITION = 500;
     SPEED = 40;
 
-    _ID = 0
+    _ID = None
     @primarykey
     def ID(self):
         return self._ID
@@ -110,7 +112,7 @@ class Car(CADIS):
     def Width(self, value):
         self._Width = value
 
-    def __init__(self, uid):
+    def __init__(self, uid=None):
         self.ID = uid
         self.Length = 30;
 
