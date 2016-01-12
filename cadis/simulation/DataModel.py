@@ -55,7 +55,7 @@ class Car(CADIS):
     '''
     classdocs
     '''
-    FINAL_POSITION = 500;
+    FINAL_POSITION = 700;
     SPEED = 40;
 
     _ID = None
@@ -154,10 +154,14 @@ class Pedestrian(CADIS):
     INITIAL_POSITION = 650;
     SPEED = 10;
 
-    #TODO: PrimaryKey
+    _ID = None
     @primarykey
     def ID(self):
         return self._ID
+
+    @ID.setter
+    def ID(self, value):
+        self._ID = value
 
     _X = 0
     @dimension
@@ -178,8 +182,7 @@ class Pedestrian(CADIS):
         self._Y = value
 
     def __init__(self, i=None):
-        if i:
-            self.ID = i
+        self.ID = i
         self.X = self.INITIAL_POSITION;
         self.Y = 0;
 
@@ -204,7 +207,7 @@ class Pedestrian(CADIS):
 
 @SubSet(Pedestrian)
 class StoppedPedestrian(Pedestrian):
-    @classmethod
+    @staticmethod
     def query():
         return [p for p in Frame.Store.get(Pedestrian) if p.X == Pedestrian.INITIAL_POSITION]  # @UndefinedVariable
     """() =>
@@ -216,7 +219,7 @@ class StoppedPedestrian(Pedestrian):
 
 @SubSet(Pedestrian)
 class Walker(Pedestrian):
-    @classmethod
+    @staticmethod
     def query():
         return [p for p in Frame.Store.get(Pedestrian) if p.X != Pedestrian.INITIAL_POSITION]  # @UndefinedVariable
 
@@ -233,7 +236,7 @@ class PedestrianInDanger(Pedestrian):
         return abs(self.p1.X - self.p2.X);
         #return Math.Sqrt(Math.Pow(Math.Abs(p1.X -p2.X), 2) +
         #    Math.Pow(Math.Abs(p1.Y -p2.Y), 2));
-    @classmethod
+    @staticmethod
     def query():
         result = []
         for p in Frame.Store.get(Pedestrian):  # @UndefinedVariable
