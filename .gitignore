@@ -13,3 +13,4 @@ perinfo.js
 worldinfo.js
 partial*.js
 .DS_Store*
+.DS_Store
