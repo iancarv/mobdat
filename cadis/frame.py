@@ -98,12 +98,13 @@ class Frame(object):
     '''
     classdocs
     '''
+
+    Store = None
     def __init__(self, store=None):
         '''
         Constructor
         '''
         self.app = None
-        self.Store = store
         self.timer = None
         self.interval = None
         self.track_changes = False
@@ -147,6 +148,7 @@ class Frame(object):
         self.encoder = CADISEncoder()
         if store:
             logger.debug("%s received store %s", LOG_HEADER, store)
+            Frame.Store = store
 
     def attach(self, app):
         self.app = app
