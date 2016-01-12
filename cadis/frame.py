@@ -336,6 +336,3 @@ class Frame(object):
 
     def __deepcopy__(self, memo):
         return self
-
-
-Frame.Store = None
