@@ -240,6 +240,13 @@ class Quaternion :
         fmt = "<{0}, {1}, {2}, {3}>"
         return fmt.format(self.x, self.y, self.z, self.w)
 
+    @staticmethod
+    def __decode__(dic):
+        return Quaternion(dic['X'], dic['Y'], dic['Z'], dic['W'])
+
+    def __json__(self):
+        return self.__dict__
+
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ZeroVector = Vector3(0.0, 0.0, 0.0)

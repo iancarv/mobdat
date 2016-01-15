@@ -8,6 +8,7 @@ from cadis.language.schema import dimension, Set, SubSet, CADIS, dimensions, set
 from collections import namedtuple
 from cadis.frame import Frame
 import uuid
+from mobdat.common.ValueTypes import Quaternion
 
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[DATAMODEL]"
@@ -30,7 +31,10 @@ class Vector3(object):
         return self.__dict__.__str__()
 
     def __eq__(self, other):
-        return (isinstance(other, Vector3) and (other.X == self.X and other.Y == self.Y and other.Z == self.Z))
+        if isinstance(other, Vector3):
+            return (other.X == self.X and other.Y == self.Y and other.Z == self.Z)
+        elif isinstance(other, tuple) or isinstance(other, list):
+            return (other[0] == self.X and other[1] == self.Y and other[2] == self.Z)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -89,7 +93,7 @@ class Vehicle(CADIS):
     def Target(self, value):
         self._Target = value
 
-    _Position = None
+    _Position = Vector3(0,0,0)
     @dimension
     def Position(self):
         return self._Position
@@ -98,7 +102,7 @@ class Vehicle(CADIS):
     def Position(self, value):
         self._Position = value
 
-    _Velocity = None
+    _Velocity = Vector3(0,0,0)
     @dimension
     def Velocity(self):
         return self._Velocity
@@ -107,7 +111,7 @@ class Vehicle(CADIS):
     def Velocity(self, value):
         self._Velocity = value
 
-    _Rotation = None
+    _Rotation = Quaternion(0,0,0,0)
     @dimension
     def Rotation(self):
         return self._Rotation
@@ -123,4 +127,4 @@ class Vehicle(CADIS):
 class MovingVehicle(Vehicle):
     @staticmethod
     def query():
-        return [c for c in Frame.Store.get(Vehicle) if c.Position != None]  # @UndefinedVariable
+        return [c for c in Frame.Store.get(Vehicle) if c.Position != None or c.Position == (0,0,0)]  # @UndefinedVariable

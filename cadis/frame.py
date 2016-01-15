@@ -312,8 +312,6 @@ class Frame(object):
             #logger.debug("%s Creating new object %s.%s", LOG_HEADER, obj.__class__, obj._primarykey)
             if obj._primarykey == None:
                 obj._primarykey =  uuid.uuid4()
-            else:
-                obj._primarykey = uuid.UUID(obj._primarykey) # Checks if assigned primary is a valid uuid
             obj._frame = self
             self.newlyproduced[obj.__class__].append(obj)
             self.storebuffer[obj.__class__][obj._primarykey] = obj
