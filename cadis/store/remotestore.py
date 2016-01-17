@@ -25,7 +25,7 @@ class RemoteStore(IStore):
         Constructor
         '''
         self.store = {}
-        self.address = "http://localhost:8080/"
+        self.address = "http://localhost:12000/"
         for t in schema.sets:
             self.store[t] = {}
         self.encoder = CADISEncoder()
@@ -53,6 +53,9 @@ class RemoteStore(IStore):
             obj.ID = UUID(data["ID"])
             objlist.append(obj)
         return objlist
+
+    def delete(self, typeObj, obj):
+        pass
 
     def close(self):
         return

@@ -8,40 +8,10 @@ from cadis.language.schema import dimension, Set, SubSet, CADIS, dimensions, set
 from collections import namedtuple
 from cadis.frame import Frame
 import uuid
-from mobdat.common.ValueTypes import Quaternion
+from mobdat.common.ValueTypes import Quaternion, Vector3
 
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[DATAMODEL]"
-
-#Vector3 = namedtuple("Vector3", ['X', 'Y', 'Z'])
-class Vector3(object):
-    X = 0
-    Y = 0
-    Z = 0
-
-    def __init__(self, X, Y, Z):
-        self.X = X
-        self.Y = Y
-        self.Z = Z
-
-    def __json__(self):
-        return self.__dict__
-
-    def __str__(self):
-        return self.__dict__.__str__()
-
-    def __eq__(self, other):
-        if isinstance(other, Vector3):
-            return (other.X == self.X and other.Y == self.Y and other.Z == self.Z)
-        elif isinstance(other, tuple) or isinstance(other, list):
-            return (other[0] == self.X and other[1] == self.Y and other[2] == self.Z)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    @staticmethod
-    def __decode__(dic):
-        return Vector3(dic['X'], dic['Y'], dic['Z'])
 
 @Set
 class Vehicle(CADIS):

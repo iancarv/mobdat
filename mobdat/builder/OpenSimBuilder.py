@@ -99,7 +99,7 @@ class OpenSimBuilder :
         for name,sim in self.Scenes.items():
             conn = sim["RemoteControl"]
             result = conn.FindObjects(pattern = oname)
-            if not result["_Success"] or len(result["Objects"]) == 0 :
+            if not (result["_Success"] == 1) or len(result["Objects"]) == 0 :
                 continue
 
             objectid = result["Objects"][0]
