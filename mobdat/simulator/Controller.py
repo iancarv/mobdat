@@ -230,8 +230,8 @@ def Controller(settings) :
     # evrouter = EventRouter.EventRouter()
     # initialize the connectors first
     connectors = []
-    #store = SimpleStore()
-    store= RemoteStore()
+    store = SimpleStore()
+    #store= RemoteStore()
     for cname in cnames :
         if cname not in _SimulationControllers :
             logger.warn('skipping unknown simulation connector; %s' % (cname))
