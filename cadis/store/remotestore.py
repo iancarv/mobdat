@@ -30,7 +30,7 @@ class RemoteStore(IStore):
             self.store[t] = {}
         self.encoder = CADISEncoder()
 
-    def insert(self, obj):
+    def insert(self, obj, sim = None):
         msg = self.encoder.encode(obj)
         req = urllib2.Request(self.address + obj._FULLNAME + '/')
         req.add_header('Content-Type', 'application/json')
