@@ -175,6 +175,7 @@ class CADIS(object):
         self._ID = value
 
 
+
     #TODO: Implement deepcopy to copy only relevant properties
 
 class CADISEncoder(json.JSONEncoder):
