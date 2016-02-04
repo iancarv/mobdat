@@ -241,7 +241,6 @@ class Person(CADIS):
 
     _EmployedBy = None
     @foreignkey(BusinessNode.Name)
-    @dimension
     def EmployedBy(self):
         return self._EmployedBy
 
@@ -251,7 +250,6 @@ class Person(CADIS):
 
     _LivesAt = None
     @foreignkey(ResidentialNode.Name)
-    @dimension
     def LivesAt(self):
         return self._LivesAt
 
@@ -333,8 +331,8 @@ class Vehicle(CADIS):
 @SubSet(Vehicle)
 class MovingVehicle(Vehicle):
     @staticmethod
-    def query():
-        return [c for c in Frame.Store.get(Vehicle) if c.Position != None or c.Position == (0,0,0)]  # @UndefinedVariable
+    def query(store):
+        return [c for c in store.get(Vehicle) if c.Position != None or c.Position == (0,0,0)]  # @UndefinedVariable
 
 if __name__ == "__main__":
     test = ResidentialNode()

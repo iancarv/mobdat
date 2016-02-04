@@ -197,16 +197,6 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
         """
         self.CurrentStep = self.frame.step
 
-        if self.CurrentStep % 25 == 0:
-            if not self.mybusiness:
-                bn = BusinessNode()
-                bn.Name = "Amazon"
-                bn.PeakCustomerCount = 0
-                self.frame.add(bn)
-                self.mybusiness = bn
-            else:
-                self.mybusiness.PeakCustomerCount += 1
-
         if self.CurrentStep % 100 == 0 :
             wtime = self.WorldTime
             qlen = len(self.TripTimerEventQ)
@@ -244,16 +234,17 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
         return objlist
 
     # -----------------------------------------------------------------
-    def initialize(self) :
+    def initialize(self, limit = None) :
         self.mybusiness = None
-
+        # Limit the number of objects for testing purposes
+        limit = 100
         if self.DataFolder:
             try:
                 f = open(os.path.join(self.DataFolder,"people.js"), "r")
                 jsonlist = json.loads(f.read())
                 self.people = self.__decode__(jsonlist, Person)
                 f.close()
-                for person in self.people:
+                for person in self.people[:limit]:
                     self.frame.add(person)
             except:
                 self.__Logger.exception("could not read data from people.js")
@@ -263,7 +254,7 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
                 jsonlist = json.loads(f.read())
                 self.business = self.__decode__(jsonlist, BusinessNode)
                 f.close()
-                for business in self.business:
+                for business in self.business[:limit]:
                     self.frame.add(business)
             except:
                 self.__Logger.exception("could not read data from business.js")
@@ -273,7 +264,7 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
                 jsonlist = json.loads(f.read())
                 self.residential = self.__decode__(jsonlist, ResidentialNode)
                 f.close()
-                for residence in self.residential:
+                for residence in self.residential[:limit]:
                     self.frame.add(residence)
             except:
                 self.__Logger.exception("could not read data from residential.js")
@@ -283,7 +274,7 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
                 jsonlist = json.loads(f.read())
                 self.cadis_roads = self.__decode__(jsonlist, Road)
                 f.close()
-                for road in self.cadis_roads:
+                for road in self.cadis_roads[:limit]:
                     self.frame.add(road)
             except:
                 self.__Logger.exception("could not read data from roads.js")
@@ -293,7 +284,7 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
                 jsonlist = json.loads(f.read())
                 self.intersections = self.__decode__(jsonlist, SimulationNode)
                 f.close()
-                for intersection in self.intersections:
+                for intersection in self.intersections[:limit]:
                     self.frame.add(intersection)
             except:
                 self.__Logger.exception("could not read data from roads.js")

@@ -13,16 +13,21 @@ from cadis.language.schema import schema_data, CADISEncoder
 import threading
 import time
 import platform
+import cProfile
+import signal
 
 import uuid
 import random
+import StringIO
+import pstats
 
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[FRAME]"
 
 USE_REMOTE_STORE = True # TODO Convert C# server to accept Strings instead of Integer
+DEBUG = False
 
-SimulatorStartup = True
+SimulatorStartup = False
 SimulatorShutdown = False
 CurrentIteration = 0
 FinalIteration = 0
@@ -43,6 +48,7 @@ class TimerThread(threading.Thread) :
 
         self.__Logger = logging.getLogger(__name__)
         self.frame = frame
+
         #self.IntervalTime = float(settings["General"]["Interval"])
         if self.frame.interval:
             self.IntervalTime = self.frame.interval
@@ -64,11 +70,16 @@ class TimerThread(threading.Thread) :
     def run(self) :
         global SimulatorStartup, SimulatorShutdown
         global FinalIteration, CurrentIteration
-
+        global profile
         # Wait for the signal to start the simulation, this allows all of the
         # connectors to initialize
         while not SimulatorStartup :
             time.sleep(5.0)
+
+        if DEBUG:
+            self.profile = cProfile.Profile()
+            self.profile.enable()
+            self.__Logger.debug("starting profiler for %s", self.frame.app.__module__)
 
         # Start the main simulation loop
         self.__Logger.debug("start main simulation loop")
@@ -76,23 +87,29 @@ class TimerThread(threading.Thread) :
 
         CurrentIteration = 0
         schema_data.frame = self.frame
+        try:
+            while not SimulatorShutdown :
 
-        while not SimulatorShutdown :
-            if FinalIteration > 0 and CurrentIteration >= FinalIteration :
-                break
+                    if FinalIteration > 0 and CurrentIteration >= FinalIteration :
+                        break
 
-            stime = self.Clock()
+                    stime = self.Clock()
 
-            self.frame.execute_Frame()
+                    self.frame.execute_Frame()
 
-            etime = self.Clock()
+                    etime = self.Clock()
 
-            if (etime - stime) < self.IntervalTime :
-                time.sleep(self.IntervalTime - (etime - stime))
-            else:
-                self.__Logger.warn("Exceeded interval time by %s" , (etime - stime))
+                    if (etime - stime) < self.IntervalTime :
+                        time.sleep(self.IntervalTime - (etime - stime))
+                    else:
+                        self.__Logger.warn("[%s]: Exceeded interval time by %s" , self.frame.app.__module__, (etime - stime))
 
-            CurrentIteration += 1
+                    CurrentIteration += 1
+        finally:
+            if DEBUG:
+                self.profile.disable()
+                self.profile.create_stats()
+                self.profile.dump_stats("stats_%s.ps" % self.frame.app.__module__)
 
         # compute a few stats
         elapsed = self.Clock() - starttime
@@ -118,6 +135,7 @@ class Frame(object):
         self.track_changes = False
         self.step = 0
         self.curtime = time.time()
+        self.__Logger = logger
 
         # Local storage for thread
         self.tlocal = None
@@ -149,6 +167,9 @@ class Frame(object):
 
         # List of objects marked for deletion
         self.deletelist = {}
+
+        # Holds a k,v storage of foreign keys (e.g. name -> id)
+        self.fkdict = {}
 
         self.timer = None
         self.step = 0
@@ -193,6 +214,13 @@ class Frame(object):
             self.new_storebuffer[t] = {}
             self.mod_storebuffer[t] = {}
             self.del_storebuffer[t] = {}
+            if hasattr(t, "_foreignkeys"):
+                for propname, cls in t._foreignkeys.items():
+                    fname = getattr(t, propname)._foreignprop._name
+                    if not cls in self.fkdict:
+                        self.fkdict[cls] = {}
+                    if not fname in self.fkdict[cls]:
+                        self.fkdict[cls][fname] = {}
             logger.debug("%s store buffer for type %s", LOG_HEADER, t)
 
         for t in self.produced:
@@ -210,17 +238,20 @@ class Frame(object):
         Frame.Store.register(self)
 
     def execute_Frame(self):
-        self.pull()
-        self.track_changes = True
-        self.app.update()
-        self.track_changes = False
-        self.prepare_push()
-        self.push()
-        if self.timer:
-            self.timer = Timer(1.0, self.execute_Frame)
-            self.timer.start()
-        self.step += 1
-        self.curtime = time.time()
+        try:
+            self.pull()
+            self.track_changes = True
+            self.app.update()
+            self.track_changes = False
+            self.prepare_push()
+            self.push()
+            if self.timer:
+                self.timer = Timer(1.0, self.execute_Frame)
+                self.timer.start()
+            self.step += 1
+            self.curtime = time.time()
+        except:
+            logger.exception("uncaught exception: ")
 
     def pull(self):
         tmpbuffer = {}
@@ -229,18 +260,33 @@ class Frame(object):
             self.mod_storebuffer[t] = {}
             self.del_storebuffer[t] = {}
 
+            # if type is subset, it will always recalculate and return as new / updated
+            # TODO: Allow caching of subsets to determine new / updated / deleted
             if hasattr(Frame.Store, "updated"):
                 (new, mod, deleted) = Frame.Store.updated(t, self)
                 for o in new:
                     self.storebuffer[t][o._primarykey] = o
                     self.new_storebuffer[t][o._primarykey] = o
+                    if o.__class__ in self.fkdict:
+                        for propname in self.fkdict[o.__class__].keys():
+                            propvalue = getattr(o, propname)
+                            self.fkdict[o.__class__][propname][propvalue] = o.ID
                 for o in mod:
                     self.storebuffer[t][o._primarykey] = o
                     self.mod_storebuffer[t][o._primarykey] = o
+                    if o.__class__ in self.fkdict:
+                        for propname in self.fkdict[o.__class__].keys():
+                            propvalue = getattr(o, propname)
+                            self.fkdict[o.__class__][propname][propvalue] = o.ID
                 for o in deleted:
                     if o._primarykey in self.storebuffer[t]:
                         del self.storebuffer[t][o._primarykey]
                         self.del_storebuffer[t][o._primarykey] = o
+                    if o.__class__ in self.fkdict:
+                        for propname in self.fkdict[o.__class__].keys():
+                            propvalue = getattr(o, propname)
+                            if propvalue in self.fkdict[o.__class__][propname]:
+                                del self.fkdict[o.__class__][propname][propvalue]
             else:
                 tmpbuffer[t] = {}
                 for o in Frame.Store.get(t):
@@ -301,7 +347,10 @@ class Frame(object):
 
     def set_property(self, t, o, v, n):
         # Newly produced items will be pushed entirely. Skip...
-        if o._primarykey in self.newlyproduced[t]:
+        if not o._primarykey:
+            return
+
+        if t in self.newlyproduced and o._primarykey in self.newlyproduced[t]:
             #logger.debug("[%s] Object ID %s in newly produced")
             return
 
@@ -336,12 +385,56 @@ class Frame(object):
             del self.storebuffer[t][oid]
         return True
 
+    def findproperty(self, t, propname, value):
+        for o in self.storebuffer[t].values():
+            if getattr(o, propname) == value:
+                return o
+        return None
+
+    def resolve_fk(self, obj, t):
+        for propname, cls in t._foreignkeys.items():
+            propvalue = getattr(obj, propname)
+            fname = getattr(t, propname)._foreignprop._name
+            if propvalue in self.fkdict[cls][fname]:
+                primkey = self.fkdict[cls][fname][propvalue]
+            else:
+                #logger.error("Could not find property value in foreign key dictionary.")
+                return None
+            if primkey in self.storebuffer[cls]:
+                newobj = self.storebuffer[cls][primkey]
+                if hasattr(cls, '_foreignkeys'):
+                    self.resolve_fk(newobj, cls)
+                setattr(obj, propname, newobj)
+            # Look up by name, just in case
+            else:
+                fname = getattr(obj.__class__, propname)._foreignprop._name
+                for o in self.storebuffer[cls].values():
+                    if propvalue == getattr(o, fname):
+                        setattr(obj, propname, o)
+
+
     def get(self, t, primkey=None):
-        if primkey != None:
-            a = copy(self.storebuffer[t][primkey])
-        else:
-            a = copy(self.storebuffer[t].values())
-        return a
+        self.track_changes = False
+        try:
+            if t not in self.storebuffer:
+                self.__Logger.error("Could not find type %s in cache. Did you remember to add it as a gettter, setter, or producer in the simulator?")
+                sys.exit(0)
+            if primkey != None:
+                obj = copy(self.storebuffer[t][primkey])
+                if hasattr(t, '_foreignkeys'):
+                    self.resolve_fk(obj, t)
+                return obj
+            else:
+                res = []
+                for obj in self.storebuffer[t].values():
+                    res.append(self.get(t, obj._primarykey))
+                return res
+        except:
+            self.__Logger.exception("Uncaught exception in Frame.Get")
+            raise
+        finally:
+            self.track_changes = True
+
 
     def new(self, t):
         return copy(self.new_storebuffer[t].values())
