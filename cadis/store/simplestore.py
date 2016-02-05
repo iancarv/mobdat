@@ -58,11 +58,15 @@ class FrameUpdate(object):
         updated = []
         deleted = []
         for key in cp_added:
+            if key not in self.store[self.objtype]:
+                continue
             if key in self.storageobj:
                 added.append(PermutationObjectfactory(self.store[self.objtype][key]))
             else:
                 added.append(deepcopy(self.store[self.objtype][key]))
         for key in cp_updated:
+            if key not in self.store[self.objtype]:
+                continue
             if key in self.storageobj:
                 updated.append(PermutationObjectfactory(self.store[self.objtype][key]))
             else:
@@ -179,6 +183,9 @@ class SimpleStore(IStore):
         return storageobj, newobjs
 
     def update(self, typeObj, primkey, sim, pushlist):
+        if primkey not in self.store[typeObj]:
+            self.__Logger.info("could not find key %s in store for type %s", primkey, typeObj)
+            return None
         obj = self.store[typeObj][primkey]
         for pname in pushlist.keys():
             #logger.debug("Setting attributes in pushlist for ID %s: %s = %s",primkey,propname,self.pushlist[t][primkey][propname])

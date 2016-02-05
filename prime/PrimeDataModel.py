@@ -14,6 +14,7 @@ class PrimeNode(Permutation):
                                 SimulationNode.Center,
                                 SimulationNode.Angle,
                                 SimulationNode.Name,
+                                SimulationNode.Rezcap,
                                 BusinessNode.CustomersPerNode,
                                 BusinessNode.PeakCustomerCount,
                             ]

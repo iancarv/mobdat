@@ -171,6 +171,9 @@ class Frame(object):
         # Holds a k,v storage of foreign keys (e.g. name -> id)
         self.fkdict = {}
 
+        # Disables fetching of subsets
+        self.subset_disable = set()
+
         self.timer = None
         self.step = 0
         self.thread = None
@@ -199,6 +202,13 @@ class Frame(object):
             self.timer.cancel()
         sys.exit(0)
 
+    def disable_subset(self, t):
+        self.subset_disable.add(t)
+
+    def enable_subset(self, t):
+        if t in self.subset_disable:
+            self.subset_disable.remove(t)
+
     def process_declarations(self, app):
         self.produced = app._producer
         self.updated = app._gettersetter
@@ -225,8 +235,8 @@ class Frame(object):
 
         for t in self.produced:
             self.pushlist[t] = {}
-            self.deletelist[t] = []
-            self.newlyproduced[t] = []
+            self.deletelist[t] = {}
+            self.newlyproduced[t] = {}
 
         if Frame.Store == None:
             logger.debug("%s creating new store", LOG_HEADER)
@@ -255,7 +265,7 @@ class Frame(object):
 
     def pull(self):
         tmpbuffer = {}
-        for t in self.observed:
+        for t in self.observed.symmetric_difference(self.subset_disable):
             self.new_storebuffer[t] = {}
             self.mod_storebuffer[t] = {}
             self.del_storebuffer[t] = {}
@@ -328,21 +338,23 @@ class Frame(object):
     def push(self):
         for t in self.pushlist:
             for primkey in self.pushlist[t].keys():
-                if primkey not in self.newlyproduced[t] and primkey in self.storebuffer[t]:
+                if primkey in self.newlyproduced[t]:
+                    continue
+                elif primkey in self.storebuffer[t]:
                     Frame.Store.update(t, primkey, self, self.pushlist[t][primkey])
                 else:
-                    logger.error("[%s] Could not find superset object for object ID %s. Pushlist: %s", self.app, primkey, self.pushlist[t])
+                    logger.error("[%s] Missing object in store buffer. Object ID %s,  Pushlist: %s", self.app, primkey, self.pushlist[t])
             self.pushlist[t] = {}
 
         for t in self.produced:
             if t in self.newlyproduced:
-                for o in self.newlyproduced[t]:
+                for o in self.newlyproduced[t].values():
                     #logger.debug("[%s] Adding obj %s (ID %s) to store", self.app, o, o._primarykey)
                     Frame.Store.insert(o, self)
-                self.newlyproduced[t] = []
+                self.newlyproduced[t] = {}
 
         for t in self.deletelist:
-            for o in self.deletelist[t]:
+            for o in self.deletelist[t].values():
                 Frame.Store.delete(t, o)
 
     def set_property(self, t, o, v, n):
@@ -373,7 +385,7 @@ class Frame(object):
             if obj._primarykey == None:
                 obj._primarykey =  uuid.uuid4()
             obj._frame = self
-            self.newlyproduced[obj.__class__].append(obj)
+            self.newlyproduced[obj.__class__][obj._primarykey] = obj
             self.storebuffer[obj.__class__][obj._primarykey] = obj
         else:
             logger.error("%s Object not in dictionary: %s", LOG_HEADER, obj.__class__)
@@ -381,7 +393,7 @@ class Frame(object):
     def delete(self, t, oid):
         if oid in self.storebuffer[t]:
             o = self.storebuffer[t][oid]
-            self.deletelist[t].append(o)
+            self.deletelist[t][o._primarykey] = o
             del self.storebuffer[t][oid]
         return True
 

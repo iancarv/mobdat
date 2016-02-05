@@ -237,7 +237,9 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
     def initialize(self, limit = None) :
         self.mybusiness = None
         # Limit the number of objects for testing purposes
-        limit = 100
+        plimit = 100
+        rlimit = None
+        blimit = None
         if self.DataFolder:
             try:
                 f = open(os.path.join(self.DataFolder,"people.js"), "r")
@@ -254,7 +256,7 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
                 jsonlist = json.loads(f.read())
                 self.business = self.__decode__(jsonlist, BusinessNode)
                 f.close()
-                for business in self.business[:limit]:
+                for business in self.business[:blimit]:
                     self.frame.add(business)
             except:
                 self.__Logger.exception("could not read data from business.js")
@@ -264,7 +266,7 @@ class SocialConnector(BaseConnector.BaseConnector, IFramed.IFramed):
                 jsonlist = json.loads(f.read())
                 self.residential = self.__decode__(jsonlist, ResidentialNode)
                 f.close()
-                for residence in self.residential[:limit]:
+                for residence in self.residential[:rlimit]:
                     self.frame.add(residence)
             except:
                 self.__Logger.exception("could not read data from residential.js")
