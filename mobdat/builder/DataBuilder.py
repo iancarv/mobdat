@@ -40,7 +40,7 @@ The functions in this file will rez a mobdat network in an OpenSim region.
 import os, sys
 import logging
 from mobdat.simulator.DataModel import Road, SimulationNode, BusinessNode,\
-    ResidentialNode, Person, VehicleInfo, JobDescription
+    ResidentialNode, Person, VehicleInfo, JobDescription, Capsule
 from mobdat.common.ValueTypes import Vector3
 from cadis.language.schema import CADISEncoder
 
@@ -246,7 +246,11 @@ class DataBuilder :
                 if node.NodeType.Name == "EndPoint":
                     if "BusinessLocation" in node.InheritedDecorations:
                         busloc = node.BusinessLocation.HostObject
+                        capsule = busloc.Capsule
                         simnode = BusinessNode()
+                        simnode.Rezcap = Capsule()
+                        simnode.Rezcap.SourceName = capsule.SourceName
+                        simnode.Rezcap.DestinationName = capsule.DestinationName
                         simnode.PeakCustomerCount = node.BusinessLocation.PeakCustomerCount
                         simnode.PeakEmployeeCount = node.BusinessLocation.PeakEmployeeCount
                         simnode.CustomersPerNode = node.BusinessLocation.HostObject.BusinessLocationProfile.CustomersPerNode
@@ -261,7 +265,11 @@ class DataBuilder :
                                         self.employedby[wedge.StartNode.Name] = name
                     elif "ResidentialLocation" in node.InheritedDecorations:
                         resloc = node.ResidentialLocation.HostObject
+                        capsule = resloc.Capsule
                         simnode = ResidentialNode()
+                        simnode.Rezcap = Capsule()
+                        simnode.Rezcap.SourceName = capsule.SourceName
+                        simnode.Rezcap.DestinationName = capsule.DestinationName
                         simnode.ResidentsPerNode = resloc.ResidentialLocationProfile.ResidentsPerNode
                         simnode.ResidentCount = node.ResidentialLocation.ResidentCount
                         simnode.ResidenceList = []

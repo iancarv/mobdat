@@ -41,9 +41,11 @@ clock ticks.
 
 import os, sys
 import logging
+import cadis.frame as frame_module
 from cadis.frame import Frame
 from cadis.store.simplestore import SimpleStore
 from cadis.store.remotestore import RemoteStore
+from prime import PrimeSimulator
 
 sys.path.append(os.path.join(os.environ.get("OPENSIM","/share/opensim"),"lib","python"))
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
@@ -63,7 +65,8 @@ _SimulationControllers = {
     'sumo' : SumoConnector.SumoConnector,
     'social' : SocialConnector.SocialConnector,
     'stats' : StatsConnector.StatsConnector,
-    'opensim' : OpenSimConnector.OpenSimConnector
+    'opensim' : OpenSimConnector.OpenSimConnector,
+    'prime' : PrimeSimulator.PrimeSimulator
     }
 
 logger = logging.getLogger(__name__)
@@ -75,87 +78,16 @@ SimulatorShutdown = False
 CurrentIteration = 0
 FinalIteration = 0
 
-class TimerThread(threading.Thread) :
-    # -----------------------------------------------------------------
-    def __init__(self, evrouter, settings) :
-        """
-        This thread will drive the simulation steps by sending periodic clock
-        ticks that each of the connectors can process.
-
-        Arguments:
-        evrouter -- the initialized event handler object
-        interval -- time between successive clock ticks
-        """
-
-        threading.Thread.__init__(self)
-
-        self.__Logger = logging.getLogger(__name__)
-        self.EventRouter = evrouter
-        self.IntervalTime = float(settings["General"]["Interval"])
-        
-        global FinalIteration
-        FinalIteration = settings["General"].get("TimeSteps",0)
-
-        self.Clock = time.time
-
-        ## this is an ugly hack because the cygwin and linux
-        ## versions of time.clock seem seriously broken
-        if platform.system() == 'Windows' :
-            self.Clock = time.clock
-
-    # -----------------------------------------------------------------
-    def run(self) :
-        global SimulatorStartup, SimulatorShutdown
-        global FinalIteration, CurrentIteration
-
-        # Wait for the signal to start the simulation, this allows all of the
-        # connectors to initialize
-        while not SimulatorStartup :
-            time.sleep(5.0)
-            
-        # Start the main simulation loop
-        self.__Logger.debug("start main simulation loop")
-        starttime = self.Clock()
-
-        CurrentIteration = 0
-        while not SimulatorShutdown :
-            if FinalIteration > 0 and CurrentIteration >= FinalIteration :
-                break
-
-            stime = self.Clock()
-
-            event = EventTypes.TimerEvent(CurrentIteration, stime)
-            self.EventRouter.RouterQueue.put(event)
-
-            etime = self.Clock()
-
-            if (etime - stime) < self.IntervalTime :
-                time.sleep(self.IntervalTime - (etime - stime))
-
-            CurrentIteration += 1
-
-        # compute a few stats
-        elapsed = self.Clock() - starttime
-        avginterval = 1000.0 * elapsed / CurrentIteration
-        self.__Logger.warn("%d iterations completed with an elapsed time %f or %f ms per iteration", CurrentIteration, elapsed, avginterval)
-
-        # send the shutdown events
-        event = EventTypes.ShutdownEvent(False)
-        self.EventRouter.RouterQueue.put(event)
-
-        SimulatorShutdown = True
-
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 class MobdatController(cmd.Cmd) :
     pformat = 'mobdat [{0}]> '
 
     # -----------------------------------------------------------------
-    def __init__(self, evrouter, logger) :
+    def __init__(self, logger, connectors) :
         cmd.Cmd.__init__(self)
-
+        self.connectors = connectors
         self.prompt = self.pformat.format(CurrentIteration)
-        self.EventRouter = evrouter
         self.__Logger = logger
 
     # -----------------------------------------------------------------
@@ -182,8 +114,7 @@ class MobdatController(cmd.Cmd) :
         """
         self.__Logger.warn("starting the timer loop")
 
-        global SimulatorStartup
-        SimulatorStartup = True
+        frame_module.SimulatorStartup = True
 
     # -----------------------------------------------------------------
     def do_exit(self, args) :
@@ -194,8 +125,7 @@ class MobdatController(cmd.Cmd) :
         self.__Logger.warn("stopping the timer loop")
 
         # kill the timer if it hasn't already shutdown
-        global SimulatorShutdown
-        SimulatorShutdown = True
+        frame_module.SimulatorShutdown = True
 
         return True
 
@@ -252,8 +182,8 @@ def Controller(settings) :
     #thread = TimerThread(evrouter, settings)
     #thread.start()
 
-    #controller = MobdatController(evrouter, logger)
-    #controller.cmdloop()
+    controller = MobdatController(logger, connectors)
+    controller.cmdloop()
 
     #thread.join()
 

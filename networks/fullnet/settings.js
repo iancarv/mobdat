@@ -8,7 +8,7 @@
         "MaximumTravelers" : 100,
 		"WorldInfoFile" : "worldinfo.js",
 		"Data" : "data",
-        "Connectors" : ["social", "sumo"]
+        "Connectors" : ["social", "prime", "sumo"]
     },
 
     "Builder" :

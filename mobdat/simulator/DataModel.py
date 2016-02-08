@@ -14,6 +14,24 @@ from mobdat.common.ValueTypes import Quaternion, Vector3
 logger = logging.getLogger(__name__)
 LOG_HEADER = "[DATAMODEL]"
 
+class Capsule(object):
+    def __init__(self, sname = None, dname = None):
+        self.SourceName = sname
+        self.DestinationName = dname
+
+    def __json__(self):
+        return self.__dict__
+
+    @staticmethod
+    def __decode__(dic):
+        if dic:
+            if 'SourceName' in dic and 'DestinationName' in dic:
+                return Capsule(dic['SourceName'], dic['DestinationName'])
+            else:
+                raise Exception("Could not decode Capsule with dic %s" % dic)
+        else:
+            return None
+
 @Set
 class SimulationNode(CADIS):
     def __init__(self):
@@ -54,6 +72,15 @@ class SimulationNode(CADIS):
     @Width.setter
     def Width(self, value):
         self._Width = value
+
+    _Rezcap = Capsule()
+    @dimension
+    def Rezcap(self):
+        return self._Rezcap
+
+    @Rezcap.setter
+    def Rezcap(self, value):
+        self._Rezcap = value
 
 @Set
 class Road(CADIS):
@@ -99,7 +126,7 @@ class Road(CADIS):
 @PermutedSet
 class BusinessNode(Permutation):
     ### Properties from SimulationNode
-    __import_dimensions__ = [ SimulationNode.Center, SimulationNode.Angle, SimulationNode.Name ]
+    __import_dimensions__ = [ SimulationNode.Center, SimulationNode.Angle, SimulationNode.Name, SimulationNode.Rezcap ]
     ### New properties
     _CustomersPerNode = 0
     @dimension
@@ -149,7 +176,7 @@ class BusinessNode(Permutation):
 @PermutedSet
 class ResidentialNode(Permutation):
     ### Properties from SimulationNode
-    __import_dimensions__ = [ SimulationNode.Center, SimulationNode.Angle, SimulationNode.Name ]
+    __import_dimensions__ = [ SimulationNode.Center, SimulationNode.Angle, SimulationNode.Name, SimulationNode.Rezcap ]
 
         ### New properties
     _ResidentsPerNode = 0
@@ -189,6 +216,17 @@ class JobDescription(object):
     def __json__(self):
         return self.__dict__
 
+    @staticmethod
+    def __decode__(dic):
+        if dic:
+            if 'Salary' in dic and 'FlexibleHours' in dic and 'Schedule' in dic:
+                return JobDescription(dic['Salary'], dic['FlexibleHours'], dic['Schedule'])
+            else:
+                raise Exception("Could not decode VehicleInfo with dic %s" % dic)
+        else:
+            return None
+
+
 class VehicleInfo(object):
     def __init__(self, vname = None, vtype = None):
         self.VehicleName = vname
@@ -197,6 +235,15 @@ class VehicleInfo(object):
     def __json__(self):
         return self.__dict__
 
+    @staticmethod
+    def __decode__(dic):
+        if dic:
+            if 'VehicleName' in dic and 'VehicleType' in dic:
+                return VehicleInfo(dic['VehicleName'], dic['VehicleType'])
+            else:
+                raise Exception("Could not decode VehicleInfo with dic %s" % dic)
+        else:
+            return None
 
 @Set
 class Person(CADIS):
@@ -212,7 +259,7 @@ class Person(CADIS):
     def Name(self, value):
         self._Name = value
 
-    _JobDescription = None
+    _JobDescription = JobDescription()
     @dimension
     def JobDescription(self):
         return self._JobDescription
@@ -230,7 +277,7 @@ class Person(CADIS):
     def Preference(self, value):
         self._Preference = value
 
-    _Vehicle = None
+    _Vehicle = VehicleInfo()
     @dimension
     def Vehicle(self):
         return self._Vehicle
@@ -241,7 +288,6 @@ class Person(CADIS):
 
     _EmployedBy = None
     @foreignkey(BusinessNode.Name)
-    @dimension
     def EmployedBy(self):
         return self._EmployedBy
 
@@ -251,7 +297,6 @@ class Person(CADIS):
 
     _LivesAt = None
     @foreignkey(ResidentialNode.Name)
-    @dimension
     def LivesAt(self):
         return self._LivesAt
 
@@ -333,8 +378,8 @@ class Vehicle(CADIS):
 @SubSet(Vehicle)
 class MovingVehicle(Vehicle):
     @staticmethod
-    def query():
-        return [c for c in Frame.Store.get(Vehicle) if c.Position != None or c.Position == (0,0,0)]  # @UndefinedVariable
+    def query(store):
+        return [c for c in store.get(Vehicle) if c.Position != None or c.Position == (0,0,0)]  # @UndefinedVariable
 
 if __name__ == "__main__":
     test = ResidentialNode()

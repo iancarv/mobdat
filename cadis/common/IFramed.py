@@ -32,9 +32,9 @@ def Getter(*args):
 
 class IFramed(object):
     __metaclass__ = abc.ABCMeta
-    _producer = None
-    _getter = None
-    _gettersetter = None
+    _producer = set()
+    _getter = set()
+    _gettersetter = set()
 
     @abc.abstractmethod
     def initialize(self):
